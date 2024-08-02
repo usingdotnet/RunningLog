@@ -199,7 +199,7 @@ namespace SteakCreateTool
 
             using (var image = e.Surface.Snapshot())
             using (var data = image.Encode(SKEncodedImageFormat.Png, 80))
-            using (var stream = File.OpenWrite( "1.png"))
+            using (var stream = File.OpenWrite($"{_year}.png"))
             {
                 // save the data to a stream
                 data.SaveTo(stream);
