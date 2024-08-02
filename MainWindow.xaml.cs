@@ -181,9 +181,9 @@ namespace SteakCreateTool
                     if (index >= (DateTime.IsLeapYear(_year) ? 366 : 365)) break;
 
                     var date = startDate.AddDays(index);
-                    double count = _data.ContainsKey(date) ? _data[date] : 0;
+                    double v = _data.TryGetValue(date, out double value) ? value : 0;
 
-                    SKColor color = count == 0 ? SKColors.LightGray : GetGreenColor(count, _maxCount);
+                    SKColor color = v == 0 ? SKColors.LightGray : GetGreenColor(v, _maxCount);
                     labelPaint.Color = color;
 
                     var rect = new SKRect(
@@ -223,7 +223,7 @@ namespace SteakCreateTool
             int totalDays = DateTime.IsLeapYear(_year) ? 366 : 365;
 
             // 生成数据的日期范围
-            for (int i = 0; i < 175; i++)
+            for (int i = 0; i < totalDays; i++)
             {
                 double x = rand.NextDouble(); // 使用 double 类型生成随机数
                 var date = startDate.AddDays(i);
