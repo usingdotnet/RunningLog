@@ -1,10 +1,13 @@
-﻿// 版本25
+﻿// 版本26
 using SkiaSharp;
 using SkiaSharp.Views.Desktop;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace SteakCreateTool
 {
@@ -21,17 +24,57 @@ namespace SteakCreateTool
 
     public partial class MainWindow : Window
     {
-        private const int Year = 2024; // 提取年份为类字段
-        private Dictionary<DateTime, int> _data;
-        private int _maxCount;
+        private int _year = 2024; // 提取年份为类字段并设为可变
+        private Dictionary<DateTime, double> _data;
+        private double _maxCount;
 
         public MainWindow()
         {
             InitializeComponent();
+            LoadData();
+        }
 
-            // 示例数据，实际应用中可以从其他数据源获取
-            _data = GenerateSampleData();
+        private void LoadData()
+        {
+            var filePath = $"{_year}.csv";
+            if (File.Exists(filePath))
+            {
+                _data = LoadDataFromCsv(filePath);
+            }
+            else
+            {
+                _data = GenerateSampleData();
+            }
             _maxCount = _data.Values.Max(); // 计算最大 count 值
+        }
+
+        private Dictionary<DateTime, double> LoadDataFromCsv(string filePath)
+        {
+            var data = new Dictionary<DateTime, double>();
+
+            foreach (var line in File.ReadLines(filePath))
+            {
+                var fields = line.Split(',');
+                if (fields.Length >= 2 && DateTime.TryParse(fields[0], out var date))
+                {
+                    if (double.TryParse(fields[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var distance))
+                    {
+                        data[date] = distance;
+                    }
+                }
+            }
+
+            return data;
+        }
+
+        private void OnYearButtonClick(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button)
+            {
+                _year = int.Parse(button.Content.ToString());
+                LoadData();
+                skElement.InvalidateVisual(); // 重新绘制
+            }
         }
 
         private void OnPaintSurface(object sender, SKPaintSurfaceEventArgs e)
@@ -78,10 +121,10 @@ namespace SteakCreateTool
 
             // 计算统计信息
             int runningDays = _data.Count(entry => entry.Value > 0);
-            int totalDistance = _data.Values.Sum();
+            double totalDistance = _data.Values.Sum();
 
-            string statsText = $"跑步天数 {runningDays}，总里程 {totalDistance} km";
-            string yearText = $"{Year}";
+            string statsText = $"跑步天数 {runningDays}，总里程 {totalDistance:F1} km";
+            string yearText = $"{_year}";
 
             // 绘制年份
             yearPaint.Color = SKColors.Black;
@@ -108,13 +151,13 @@ namespace SteakCreateTool
             }
 
             // 绘制月份标签
-            var startDate = new DateTime(Year, 1, 1);
-            int totalDays = DateTime.IsLeapYear(Year) ? 366 : 365;
+            var startDate = new DateTime(_year, 1, 1);
+            int totalDays = DateTime.IsLeapYear(_year) ? 366 : 365;
             int rows = 7; // 一周7天
 
             for (int month = 1; month <= 12; month++)
             {
-                var monthStart = new DateTime(Year, month, 1);
+                var monthStart = new DateTime(_year, month, 1);
                 int daysBeforeMonth = (monthStart - startDate).Days;
                 int monthStartCol = (daysBeforeMonth + (int)GetChineseDayOfWeek(startDate.DayOfWeek)) / rows;
                 int monthOffsetX = monthStartCol * (cellSize + padding) + dayLabelWidth;
@@ -125,7 +168,7 @@ namespace SteakCreateTool
             }
 
             // 计算总列数和总行数
-            int totalCols = (int)Math.Ceiling((DateTime.IsLeapYear(Year) ? 366 : 365 + (int)GetChineseDayOfWeek(startDate.DayOfWeek)) / (double)rows);
+            int totalCols = (int)Math.Ceiling((DateTime.IsLeapYear(_year) ? 366 : 365 + (int)GetChineseDayOfWeek(startDate.DayOfWeek)) / (double)rows);
             int totalRows = rows;
 
             // 绘制热力图格子
@@ -135,10 +178,10 @@ namespace SteakCreateTool
                 {
                     int index = col * totalRows + row - (int)GetChineseDayOfWeek(startDate.DayOfWeek);
                     if (index < 0) continue; // 跳过前一周的日期
-                    if (index >= (DateTime.IsLeapYear(Year) ? 366 : 365)) break;
+                    if (index >= (DateTime.IsLeapYear(_year) ? 366 : 365)) break;
 
                     var date = startDate.AddDays(index);
-                    int count = _data.ContainsKey(date) ? _data[date] : 0;
+                    double count = _data.ContainsKey(date) ? _data[date] : 0;
 
                     SKColor color = count == 0 ? SKColors.LightGray : GetGreenColor(count, _maxCount);
                     labelPaint.Color = color;
@@ -155,24 +198,34 @@ namespace SteakCreateTool
             }
         }
 
-        private SKColor GetGreenColor(int count, int maxCount)
+        private SKColor GetGreenColor(double distance, double maxDistance)
         {
-            double percentage = Math.Min(1.0, count / (double)maxCount);
-            byte g = (byte)(255 * percentage);
-            return new SKColor(0, g, 0); // 从浅绿色到深绿色
+            // 计算距离的比例
+            double normalizedDistance = Math.Min(1.0, distance / maxDistance);
+
+            // 设置渐变的起始和终止颜色
+            SKColor startColor = new SKColor(255, 255, 0); // 黄色
+            SKColor endColor = new SKColor(0, 128, 0); // 深绿色
+
+            // 插值计算颜色
+            byte r = (byte)(startColor.Red + (endColor.Red - startColor.Red) * normalizedDistance);
+            byte g = (byte)(startColor.Green + (endColor.Green - startColor.Green) * normalizedDistance);
+            byte b = (byte)(startColor.Blue + (endColor.Blue - startColor.Blue) * normalizedDistance);
+
+            return new SKColor(r, g, b);
         }
 
-        private Dictionary<DateTime, int> GenerateSampleData()
+        private Dictionary<DateTime, double> GenerateSampleData()
         {
             var rand = new Random();
-            var data = new Dictionary<DateTime, int>();
-            var startDate = new DateTime(Year, 1, 1);
-            int totalDays = DateTime.IsLeapYear(Year) ? 366 : 365;
+            var data = new Dictionary<DateTime, double>();
+            var startDate = new DateTime(_year, 1, 1);
+            int totalDays = DateTime.IsLeapYear(_year) ? 366 : 365;
 
             // 生成数据的日期范围
             for (int i = 0; i < 175; i++)
             {
-                int x = rand.Next(2);
+                double x = rand.NextDouble(); // 使用 double 类型生成随机数
                 var date = startDate.AddDays(i);
                 // 计算每周的周一、三、五的跑步数据
                 if (date.DayOfWeek == DayOfWeek.Monday || date.DayOfWeek == DayOfWeek.Wednesday || date.DayOfWeek == DayOfWeek.Friday)
