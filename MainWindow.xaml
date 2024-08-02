@@ -12,11 +12,11 @@
             <RowDefinition Height="2*"/>
             <RowDefinition/>
         </Grid.RowDefinitions>
-        <Border Name="border"
+        <Border Name="border" Margin="5"
                 Background="White"
                 BorderBrush="Black"
-                BorderThickness="1"
-                ToolTip="{Binding ElementName=skElement, Path=ToolTip}">
+                BorderThickness="0"
+                ToolTip="{Binding ElementName=skElement, Path=ToolTip}" >
             <skia:SKElement x:Name="skElement" PaintSurface="OnPaintSurface" />
         </Border>
     </Grid>
