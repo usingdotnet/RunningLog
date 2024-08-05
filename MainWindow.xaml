@@ -7,9 +7,18 @@
         mc:Ignorable="d" 
         xmlns:skia="clr-namespace:SkiaSharp.Views.WPF;assembly=SkiaSharp.Views.WPF"
         xmlns:sys="clr-namespace:System;assembly=System.Runtime" Loaded="MainWindow_OnLoaded"
-        Title="跑步日志" Height="310" Width="940">
+        Title="跑步日志" Height="400" Width="940">
     <Grid>
+        <Grid.Resources>
+            <Style TargetType="Button">
+                <Setter Property="Width" Value="60"/>
+                <Setter Property="Height" Value="30"/>
+                <Setter Property="Margin" Value="5"/>
+            </Style>
+        </Grid.Resources>
+
         <Grid.RowDefinitions>
+            <RowDefinition/>
             <RowDefinition Height="7*"/>
             <RowDefinition/>
         </Grid.RowDefinitions>
@@ -17,25 +26,22 @@
             <ColumnDefinition Width="7*"/>
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
-        <Border Name="border" Margin="5"
+        <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="浅色" Background="White" Foreground="Black" Click="BtnLightMode_OnClick"/>
+            <Button Content="深色" Background="Black" Foreground="White" Click="BtnDarkMode_OnClick"/>
+        </StackPanel>
+        <Border Grid.Row="1" Grid.Column="0" Name="border" Margin="5"
                 Background="White"
                 BorderBrush="Black"
                 BorderThickness="0"
                 ToolTip="{Binding ElementName=skElement, Path=ToolTip}" >
             <skia:SKElement x:Name="skElement" PaintSurface="OnPaintSurface" />
         </Border>
-        <StackPanel Grid.Column="1" Grid.Row="0" Orientation="Vertical" Margin="5,50,5,5">
-            <StackPanel.Resources>
-                <Style TargetType="Button">
-                    <Setter Property="Width" Value="60"/>
-                    <Setter Property="Height" Value="30"/>
-                    <Setter Property="Margin" Value="5"/>
-                </Style>
-            </StackPanel.Resources>
+        <StackPanel Grid.Column="1" Grid.Row="1" Orientation="Vertical" Margin="5,50,5,5">
             <Button Content="2023" Click="OnYearButtonClick"/>
             <Button Content="2024" Click="OnYearButtonClick"/>
         </StackPanel>
-        <StackPanel Grid.Column="0" Grid.Row="1" Orientation="Horizontal" Margin="5">
+        <StackPanel Grid.Column="0" Grid.Row="2" Orientation="Horizontal" Margin="5">
             <StackPanel.Resources>
                 <Style x:Key="styleCalendar" TargetType="{x:Type Calendar}">
                     <Setter Property="Template">

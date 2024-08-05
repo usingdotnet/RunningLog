@@ -1,11 +1,8 @@
-﻿// 版本26
+﻿// 版本27
 using SkiaSharp;
 using SkiaSharp.Views.Desktop;
-using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using NLog;
@@ -29,6 +26,7 @@ public partial class MainWindow : Window
     private Dictionary<DateTime, double> _data = [];
     private readonly string _dataDir = @"E:\Code\MyCode\RunningLog\data";
     private readonly Logger _logger = LogManager.GetCurrentClassLogger();
+    private bool _isDarkMode = true;
 
     public MainWindow()
     {
@@ -96,8 +94,11 @@ public partial class MainWindow : Window
 
     private void OnPaintSurface(object sender, SKPaintSurfaceEventArgs e)
     {
+        var black = new SKColor(34, 34, 34);
         var canvas = e.Surface.Canvas;
-        canvas.Clear(SKColors.White);
+        var backgroundColor = _isDarkMode ?black : SKColors.White;
+        var textColor = _isDarkMode ? SKColors.White : black;
+        canvas.Clear(backgroundColor);
 
         int cellSize = 12;
         int padding = 2;
@@ -115,7 +116,8 @@ public partial class MainWindow : Window
             IsAntialias = true,
             Style = SKPaintStyle.Fill,
             TextSize = 20,
-            Typeface = SKTypeface.FromFamilyName("Microsoft YaHei", SKFontStyle.Bold)
+            Typeface = SKTypeface.FromFamilyName("Microsoft YaHei", SKFontStyle.Bold),
+            Color = textColor
         };
 
         // 统计信息字体设置
@@ -124,7 +126,8 @@ public partial class MainWindow : Window
             IsAntialias = true,
             Style = SKPaintStyle.Fill,
             TextSize = 16,
-            Typeface = SKTypeface.FromFamilyName("Microsoft YaHei")
+            Typeface = SKTypeface.FromFamilyName("Microsoft YaHei"),
+            Color = textColor
         };
 
         // 星期和月份标签字体设置
@@ -133,7 +136,8 @@ public partial class MainWindow : Window
             IsAntialias = true,
             Style = SKPaintStyle.Fill,
             TextSize = 14,
-            Typeface = SKTypeface.FromFamilyName("Microsoft YaHei")
+            Typeface = SKTypeface.FromFamilyName("Microsoft YaHei"),
+            Color = textColor
         };
 
         // 计算统计信息
@@ -144,11 +148,9 @@ public partial class MainWindow : Window
         string yearText = $"{_year}";
 
         // 绘制年份
-        yearPaint.Color = SKColors.Black;
         var yearTextWidth = yearPaint.MeasureText(yearText);
 
         // 绘制统计信息
-        statsPaint.Color = SKColors.Black;
         var statsTextWidth = statsPaint.MeasureText(statsText);
 
         // 计算居中的位置
@@ -159,7 +161,6 @@ public partial class MainWindow : Window
 
         // 绘制指定的星期几标签（只绘制一、三、五）
         var daysOfWeek = new[] { "一", "三", "五" };
-        labelPaint.Color = SKColors.Black;
         int labelVerticalOffset = (cellSize + padding) / 2 + 3; // 标签垂直偏移量
         for (int i = 0; i < daysOfWeek.Length; i++)
         {
@@ -180,7 +181,6 @@ public partial class MainWindow : Window
             int monthOffsetX = monthStartCol * (cellSize + padding) + dayLabelWidth;
 
             // 绘制月份名称
-            labelPaint.Color = SKColors.Black;
             canvas.DrawText($"{month}月", monthOffsetX, headerHeight + monthLabelHeight / 2, labelPaint);
         }
 
@@ -200,7 +200,16 @@ public partial class MainWindow : Window
                 var date = startDate.AddDays(index);
                 double v = _data.TryGetValue(date, out double value) ? value : 0;
 
-                SKColor color = v == 0 ? SKColors.LightGray : GetDayColor(v);
+                SKColor color;
+                if (_isDarkMode)
+                {
+                    color = v == 0 ? new SKColor(68, 68, 68) : GetDayColor(v);
+                }
+                else
+                {
+                    color = v == 0 ? SKColors.LightGray : GetDayColor(v);
+                }
+
                 labelPaint.Color = color;
 
                 var rect = new SKRect(
@@ -300,5 +309,17 @@ public partial class MainWindow : Window
         {
             MessageBox.Show("请输入有效的距离和日期。", "输入错误", MessageBoxButton.OK, MessageBoxImage.Error);
         }
+    }
+
+    private void BtnLightMode_OnClick(object sender, RoutedEventArgs e)
+    {
+        _isDarkMode = false;
+        skElement.InvalidateVisual();
+    }
+
+    private void BtnDarkMode_OnClick(object sender, RoutedEventArgs e)
+    {
+        _isDarkMode = true;
+        skElement.InvalidateVisual();
     }
 }
