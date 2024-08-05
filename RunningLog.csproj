@@ -6,25 +6,17 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
-    <ApplicationIcon>logo.ico</ApplicationIcon>
+    <ApplicationIcon>running.ico</ApplicationIcon>
   </PropertyGroup>
 
-  <ItemGroup>
-    <None Remove="logo.png" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="logo.ico" />
+ <ItemGroup>
+    <Content Include="running.ico" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="NLog" Version="5.3.*" />
     <PackageReference Include="SkiaSharp" Version="2.88.*" />
     <PackageReference Include="SkiaSharp.Views.WPF" Version="2.88.*" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Resource Include="logo.png" />
   </ItemGroup>
 
 </Project>
