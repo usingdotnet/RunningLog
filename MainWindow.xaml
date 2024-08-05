@@ -6,10 +6,11 @@
         xmlns:local="clr-namespace:SteakCreateTool"
         mc:Ignorable="d" 
         xmlns:skia="clr-namespace:SkiaSharp.Views.WPF;assembly=SkiaSharp.Views.WPF"
-        Title="MainWindow" Height="450" Width="940">
+        xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+        Title="MainWindow" Height="300" Width="940">
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="2*"/>
+            <RowDefinition Height="6*"/>
             <RowDefinition/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
@@ -33,7 +34,32 @@
             </StackPanel.Resources>
             <Button Content="2023" Click="OnYearButtonClick"/>
             <Button Content="2024" Click="OnYearButtonClick"/>
-            <Button Content="2025" Click="OnYearButtonClick"/>
+        </StackPanel>
+        <StackPanel Grid.Column="0" Grid.Row="1" Orientation="Horizontal" Margin="5">
+            <StackPanel.Resources>
+                <Style x:Key="styleCalendar" TargetType="{x:Type Calendar}">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="{x:Type Calendar}">
+                                <!-- Wrapping in ViewBox will enlarge calendar of that size.-->
+                                <Viewbox Height="300"
+                                         Width="300">
+                                    <CalendarItem x:Name="PART_CalendarItem"
+                                                  Background="{TemplateBinding Background}"
+                                                  BorderBrush="{TemplateBinding BorderBrush}"
+                                                  BorderThickness="{TemplateBinding BorderThickness}"/>
+                                </Viewbox>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </StackPanel.Resources>
+            <DatePicker DisplayDate="" CalendarStyle="{StaticResource styleCalendar}" SelectedDate="{x:Static sys:DateTime.Now}" 
+                        VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Name="DpDate"/>
+            <Label Content="距离："/>
+            <TextBox Name="TxtDistance" Width="60" Text="5" VerticalContentAlignment="Center" HorizontalContentAlignment="Right"/>
+            <Label Content="Km"/>
+            <Button Name="BtnOk" Content="添加" Margin="5,0" Width="60" Click="BtnOk_OnClick"/>
         </StackPanel>
     </Grid>
 </Window>

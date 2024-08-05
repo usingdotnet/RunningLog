@@ -206,7 +206,7 @@ namespace SteakCreateTool
             }
         }
 
-        private SKColor GetGreenColor(double distance, double maxDistance)
+        private static SKColor GetGreenColor(double distance, double maxDistance)
         {
             // 计算距离的比例
             double normalizedDistance = Math.Min(1.0, distance / maxDistance);
@@ -248,10 +248,34 @@ namespace SteakCreateTool
             return data;
         }
 
-        private ChineseDayOfWeek GetChineseDayOfWeek(DayOfWeek dayOfWeek)
+        private static ChineseDayOfWeek GetChineseDayOfWeek(DayOfWeek dayOfWeek)
         {
             // 将 .NET 的 DayOfWeek 转换为中国习惯的星期枚举
             return (ChineseDayOfWeek)(((int)dayOfWeek + 6) % 7);
+        }
+
+        private void BtnOk_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (DpDate.SelectedDate.HasValue && double.TryParse(TxtDistance.Text, out double distance))
+            {
+                DateTime selectedDate = DpDate.SelectedDate.Value;
+                _data[selectedDate] = distance;
+
+                // 按日期排序并保存到 CSV 文件
+                var sortedData = _data.OrderBy(entry => entry.Key).ToList();
+                var csvLines = sortedData.Select(entry => $"{entry.Key:yyyy-MM-dd},{entry.Value:F1}").ToArray();
+                File.WriteAllLines($"{_year}.csv", csvLines);
+
+                // 重新计算最大距离
+                _maxCount = _data.Values.Max();
+
+                // 重新绘制
+                skElement.InvalidateVisual();
+            }
+            else
+            {
+                MessageBox.Show("请输入有效的距离和日期。", "输入错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
     }
 }
