@@ -25,13 +25,28 @@ public enum ChineseDayOfWeek
 public partial class MainWindow : Window
 {
     private int _year = 2024; // 提取年份为类字段并设为可变
-    private Dictionary<DateTime, double> _data;
-    private string _dataDir = @"E:\Code\MyCode\RunningLog\data";
+    private Dictionary<DateTime, double> _data = [];
+    private readonly string _dataDir = @"E:\Code\MyCode\RunningLog\data";
 
     public MainWindow()
     {
         InitializeComponent();
+        // 获取屏幕工作区域
+        double screenHeight = SystemParameters.PrimaryScreenHeight;
+        double screenWidth = SystemParameters.PrimaryScreenWidth;
+
+        // 获取任务栏高度
+        double taskbarHeight = SystemParameters.PrimaryScreenHeight - SystemParameters.WorkArea.Height;
+
+        // 设置窗体的位置，使其底部紧靠任务栏的上边缘
+        this.Top = screenHeight - this.Height - taskbarHeight + 7;
+        this.Left = (screenWidth - this.Width) / 2;
+
         LoadData();
+    }
+
+    private void MainWindow_OnLoaded(object sender, RoutedEventArgs e)
+    {
     }
 
     private void LoadData()
@@ -48,7 +63,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private Dictionary<DateTime, double> LoadDataFromCsv(string filePath)
+    private static Dictionary<DateTime, double> LoadDataFromCsv(string filePath)
     {
         var data = new Dictionary<DateTime, double>();
 
@@ -222,7 +237,7 @@ public partial class MainWindow : Window
         SKColor endColor = new SKColor(0, 128, 0); // 深绿色
 
         // 使用一个简单的比例来确定渐变
-        // 比例范围可以调整，例如：0.5 为中间值
+        // 比例范围可以调整，例如：1.0 为中间值
         double normalizedDistance = Math.Min(1.0, distance / specialDistance);
 
         // 插值计算颜色
@@ -233,7 +248,6 @@ public partial class MainWindow : Window
         return new SKColor(r, g, b);
     }
 
-
     private static ChineseDayOfWeek GetChineseDayOfWeek(DayOfWeek dayOfWeek)
     {
         // 将 .NET 的 DayOfWeek 转换为中国习惯的星期枚举
@@ -242,7 +256,7 @@ public partial class MainWindow : Window
 
     private void BtnOk_OnClick(object sender, RoutedEventArgs e)
     {
-        if (DpDate.SelectedDate.HasValue && double.TryParse(TxtDistance.Text, out double distance))
+        if (DpDate.SelectedDate.HasValue && double.TryParse(TxtDistance.Text, out double distance) && distance > 0)
         {
             DateTime selectedDate = DpDate.SelectedDate.Value;
             int selectedYear = selectedDate.Year;
