@@ -234,11 +234,20 @@ public partial class MainWindow : Window
         if (DpDate.SelectedDate.HasValue && double.TryParse(TxtDistance.Text, out double distance))
         {
             DateTime selectedDate = DpDate.SelectedDate.Value;
+            int selectedYear = selectedDate.Year;
+
+            // 如果选定的日期的年份与当前年份不同，更新年份并加载数据
+            if (selectedYear != _year)
+            {
+                _year = selectedYear;
+                LoadData();
+            }
+
             _data[selectedDate] = distance;
 
             // 按日期排序并保存到 CSV 文件
             var sortedData = _data.OrderBy(entry => entry.Key).ToList();
-            var csvLines = sortedData.Select(entry => $"{entry.Key:yyyy-MM-dd},{entry.Value:F1}").ToArray();
+            var csvLines = sortedData.Select(entry => $"{entry.Key:yyyy-MM-dd},{entry.Value:F2}").ToArray();
             File.WriteAllLines($"{_year}.csv", csvLines);
 
             // 重新计算最大距离
@@ -252,4 +261,5 @@ public partial class MainWindow : Window
             MessageBox.Show("请输入有效的距离和日期。", "输入错误", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
+
 }
