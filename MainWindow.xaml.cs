@@ -28,7 +28,7 @@ public partial class MainWindow : Window
     private int _year = 2024; // 提取年份为类字段并设为可变
     private Dictionary<DateTime, double> _data = [];
     private readonly string _dataDir = @"E:\Code\MyCode\RunningLog\data";
-    private Logger _logger = LogManager.GetCurrentClassLogger();
+    private readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
     public MainWindow()
     {
