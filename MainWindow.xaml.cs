@@ -224,22 +224,28 @@ public partial class MainWindow : Window
 
     private static SKColor GetGreenColor(double distance)
     {
-        // 设置特定距离的颜色
-        double specialDistance = 10; // 特定的距离阈值
+        // 设置特定距离的颜色阈值
+        double lowThreshold = 2.5; // 低阈值，低于该距离使用较浅的绿色
+        double highThreshold = 5.0; // 高阈值，高于该距离使用深绿色
 
-        // 如果距离大于等于特定距离，则使用固定的颜色
-        if (distance >= specialDistance)
+        // 如果距离低于低阈值，则使用较浅的绿色
+        if (distance < lowThreshold)
+        {
+            return new SKColor(173, 255, 47); // 浅绿色
+        }
+
+        // 如果距离大于等于高阈值，则使用深绿色
+        if (distance >= highThreshold)
         {
             return new SKColor(0, 128, 0); // 深绿色
         }
 
         // 设置渐变的起始和终止颜色
-        SKColor startColor = new SKColor(255, 255, 0); // 黄色
+        SKColor startColor = new SKColor(173, 255, 47); // 浅绿色
         SKColor endColor = new SKColor(0, 128, 0); // 深绿色
 
-        // 使用一个简单的比例来确定渐变
-        // 比例范围可以调整，例如：1.0 为中间值
-        double normalizedDistance = Math.Min(5.0, distance / specialDistance);
+        // 计算渐变比例（基于低阈值和高阈值）
+        double normalizedDistance = (distance - lowThreshold) / (highThreshold - lowThreshold);
 
         // 插值计算颜色
         byte r = (byte)(startColor.Red + (endColor.Red - startColor.Red) * normalizedDistance);
