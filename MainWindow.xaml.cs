@@ -185,7 +185,7 @@ public partial class MainWindow : Window
         }
 
         // 计算总列数和总行数
-        int totalCols = (int)Math.Ceiling((DateTime.IsLeapYear(_year) ? 366 : 365 + (int)GetChineseDayOfWeek(startDate.DayOfWeek)) / (double)rows);
+        int totalCols = (int)Math.Ceiling((totalDays + (int)GetChineseDayOfWeek(startDate.DayOfWeek)) / (double)rows);
         int totalRows = rows;
 
         // 绘制热力图格子
