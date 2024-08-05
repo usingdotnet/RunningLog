@@ -26,7 +26,6 @@ public partial class MainWindow : Window
 {
     private int _year = 2024; // 提取年份为类字段并设为可变
     private Dictionary<DateTime, double> _data;
-    private double _maxCount;
     private string _dataDir = @"E:\Code\MyCode\RunningLog\data";
 
     public MainWindow()
@@ -47,7 +46,6 @@ public partial class MainWindow : Window
         {
             _data = new Dictionary<DateTime, double>();
         }
-        _maxCount = _data.Values.DefaultIfEmpty(0).Max(); // 计算最大 count 值
     }
 
     private Dictionary<DateTime, double> LoadDataFromCsv(string filePath)
@@ -185,7 +183,7 @@ public partial class MainWindow : Window
                 var date = startDate.AddDays(index);
                 double v = _data.TryGetValue(date, out double value) ? value : 0;
 
-                SKColor color = v == 0 ? SKColors.LightGray : GetGreenColor(v, _maxCount);
+                SKColor color = v == 0 ? SKColors.LightGray : GetGreenColor(v);
                 labelPaint.Color = color;
 
                 var rect = new SKRect(
@@ -208,14 +206,24 @@ public partial class MainWindow : Window
         }
     }
 
-    private static SKColor GetGreenColor(double distance, double maxDistance)
+    private static SKColor GetGreenColor(double distance)
     {
-        // 计算距离的比例
-        double normalizedDistance = Math.Min(1.0, distance / maxDistance);
+        // 设置特定距离的颜色
+        double specialDistance = 10.0; // 特定的距离阈值
+
+        // 如果距离大于等于特定距离，则使用固定的颜色
+        if (distance >= specialDistance)
+        {
+            return new SKColor(0, 128, 0); // 深绿色
+        }
 
         // 设置渐变的起始和终止颜色
         SKColor startColor = new SKColor(255, 255, 0); // 黄色
         SKColor endColor = new SKColor(0, 128, 0); // 深绿色
+
+        // 使用一个简单的比例来确定渐变
+        // 比例范围可以调整，例如：0.5 为中间值
+        double normalizedDistance = Math.Min(1.0, distance / specialDistance);
 
         // 插值计算颜色
         byte r = (byte)(startColor.Red + (endColor.Red - startColor.Red) * normalizedDistance);
@@ -224,6 +232,7 @@ public partial class MainWindow : Window
 
         return new SKColor(r, g, b);
     }
+
 
     private static ChineseDayOfWeek GetChineseDayOfWeek(DayOfWeek dayOfWeek)
     {
@@ -253,9 +262,6 @@ public partial class MainWindow : Window
             var file = Path.Combine(_dataDir, $"{_year}.csv");
             File.WriteAllLines(file, csvLines);
 
-            // 重新计算最大距离
-            _maxCount = _data.Values.Max();
-
             // 重新绘制
             skElement.InvalidateVisual();
         }
@@ -264,5 +270,4 @@ public partial class MainWindow : Window
             MessageBox.Show("请输入有效的距离和日期。", "输入错误", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
-
 }
