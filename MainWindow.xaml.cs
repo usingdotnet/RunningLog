@@ -200,7 +200,7 @@ public partial class MainWindow : Window
                 var date = startDate.AddDays(index);
                 double v = _data.TryGetValue(date, out double value) ? value : 0;
 
-                SKColor color = v == 0 ? SKColors.LightGray : GetGreenColor(v);
+                SKColor color = v == 0 ? SKColors.LightGray : GetDayColor(v);
                 labelPaint.Color = color;
 
                 var rect = new SKRect(
@@ -222,7 +222,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private static SKColor GetGreenColor(double distance)
+    private static SKColor GetDayColor(double distance)
     {
         // 设置特定距离的颜色阈值
         double lowThreshold = 2.5; // 低阈值，低于该距离使用较浅的绿色
