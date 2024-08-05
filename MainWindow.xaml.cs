@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using NLog;
 
 namespace RunningLog;
 
@@ -27,6 +28,7 @@ public partial class MainWindow : Window
     private int _year = 2024; // 提取年份为类字段并设为可变
     private Dictionary<DateTime, double> _data = [];
     private readonly string _dataDir = @"E:\Code\MyCode\RunningLog\data";
+    private Logger _logger = LogManager.GetCurrentClassLogger();
 
     public MainWindow()
     {
@@ -138,7 +140,7 @@ public partial class MainWindow : Window
         int runningDays = _data.Count(entry => entry.Value > 0);
         double totalDistance = _data.Values.Sum();
 
-        string statsText = $"跑步天数 {runningDays}，总里程 {totalDistance:F1} km";
+        string statsText = $"共跑步 {runningDays} 天，总里程 {totalDistance:F2} km";
         string yearText = $"{_year}";
 
         // 绘制年份
@@ -216,7 +218,6 @@ public partial class MainWindow : Window
         using (var data = image.Encode(SKEncodedImageFormat.Png, 80))
         using (var stream = File.OpenWrite($"{_year}.png"))
         {
-            // save the data to a stream
             data.SaveTo(stream);
         }
     }
@@ -224,7 +225,7 @@ public partial class MainWindow : Window
     private static SKColor GetGreenColor(double distance)
     {
         // 设置特定距离的颜色
-        double specialDistance = 10.0; // 特定的距离阈值
+        double specialDistance = 10; // 特定的距离阈值
 
         // 如果距离大于等于特定距离，则使用固定的颜色
         if (distance >= specialDistance)
@@ -238,7 +239,7 @@ public partial class MainWindow : Window
 
         // 使用一个简单的比例来确定渐变
         // 比例范围可以调整，例如：1.0 为中间值
-        double normalizedDistance = Math.Min(1.0, distance / specialDistance);
+        double normalizedDistance = Math.Min(5.0, distance / specialDistance);
 
         // 插值计算颜色
         byte r = (byte)(startColor.Red + (endColor.Red - startColor.Red) * normalizedDistance);
@@ -266,6 +267,16 @@ public partial class MainWindow : Window
             {
                 _year = selectedYear;
                 LoadData();
+            }
+
+            var d = selectedDate.ToString("yyyy-MM-dd");
+            if (_data.TryGetValue(selectedDate, out double value))
+            {
+                _logger.Debug($"日期 {d} 的距离由 {value} 修改为 {distance}");
+            }
+            else
+            {
+                _logger.Debug($"添加日期 {d} 的距离 {distance}");
             }
 
             _data[selectedDate] = distance;
