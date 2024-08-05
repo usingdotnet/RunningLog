@@ -7,7 +7,7 @@
         mc:Ignorable="d" 
         xmlns:skia="clr-namespace:SkiaSharp.Views.WPF;assembly=SkiaSharp.Views.WPF"
         xmlns:sys="clr-namespace:System;assembly=System.Runtime" Loaded="MainWindow_OnLoaded"
-        Title="跑步日志" Height="310" Width="940">
+        Title="跑步日志" Height="310" Width="940" Icon="/logo.ico">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="7*"/>
