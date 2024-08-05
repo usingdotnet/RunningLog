@@ -27,6 +27,7 @@ public partial class MainWindow : Window
     private int _year = 2024; // 提取年份为类字段并设为可变
     private Dictionary<DateTime, double> _data;
     private double _maxCount;
+    private string _dataDir = @"E:\Code\MyCode\RunningLog\data";
 
     public MainWindow()
     {
@@ -37,6 +38,7 @@ public partial class MainWindow : Window
     private void LoadData()
     {
         var filePath = $"{_year}.csv";
+        filePath = Path.Combine(_dataDir, filePath);
         if (File.Exists(filePath))
         {
             _data = LoadDataFromCsv(filePath);
@@ -248,7 +250,8 @@ public partial class MainWindow : Window
             // 按日期排序并保存到 CSV 文件
             var sortedData = _data.OrderBy(entry => entry.Key).ToList();
             var csvLines = sortedData.Select(entry => $"{entry.Key:yyyy-MM-dd},{entry.Value:F2}").ToArray();
-            File.WriteAllLines($"{_year}.csv", csvLines);
+            var file = Path.Combine(_dataDir, $"{_year}.csv");
+            File.WriteAllLines(file, csvLines);
 
             // 重新计算最大距离
             _maxCount = _data.Values.Max();
