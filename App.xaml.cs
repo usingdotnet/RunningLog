@@ -2,7 +2,7 @@
 using System.Data;
 using System.Windows;
 
-namespace SteakCreateTool
+namespace RunningLog
 {
     /// <summary>
     /// Interaction logic for App.xaml

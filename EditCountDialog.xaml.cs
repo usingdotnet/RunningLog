@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows;
 
-namespace SteakCreateTool
+namespace RunningLog
 {
     public partial class EditCountDialog : Window
     {

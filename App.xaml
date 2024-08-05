@@ -1,7 +1,7 @@
-﻿<Application x:Class="SteakCreateTool.App"
+﻿<Application x:Class="RunningLog.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:SteakCreateTool"
+             xmlns:local="clr-namespace:RunningLog"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
          
