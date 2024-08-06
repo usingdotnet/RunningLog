@@ -223,9 +223,10 @@ public partial class MainWindow : Window
             }
         }
 
+        string png = Path.Combine(_dataDir,$"{_year}.png");
         using (var image = e.Surface.Snapshot())
         using (var data = image.Encode(SKEncodedImageFormat.Png, 80))
-        using (var stream = File.OpenWrite($"{_year}.png"))
+        using (var stream = File.OpenWrite(png))
         {
             data.SaveTo(stream);
         }
