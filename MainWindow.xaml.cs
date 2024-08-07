@@ -364,19 +364,12 @@ public partial class MainWindow : Window
 
     async Task ExecuteGitCommand(string workingDirectory, string arguments)
     {
-        var result = await Cli.Wrap("git")
+        var task = Cli.Wrap("git")
             .WithArguments(arguments)
             .WithWorkingDirectory(workingDirectory)
-            .ExecuteBufferedAsync();
-
-        // 直接使用输出
-        string output = result.StandardOutput;
-        string error = result.StandardError;
-
-        _logger.Info($"Output: {output}");
-        if (!string.IsNullOrEmpty(error))
-        {
-            _logger.Error($"Error: {error}");
-        }
+            .WithStandardOutputPipe(PipeTarget.ToDelegate(s => _logger.Debug(s)))
+            .WithStandardErrorPipe(PipeTarget.ToDelegate(s => _logger.Debug(s)))
+            .ExecuteAsync();
+        await task;
     }
 }
