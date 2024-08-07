@@ -7,6 +7,8 @@ using System.Windows;
 using System.Windows.Controls;
 using NLog;
 using System.Diagnostics;
+using CliWrap;
+using CliWrap.Buffered;
 
 namespace RunningLog;
 
@@ -330,7 +332,7 @@ public partial class MainWindow : Window
         skElement.InvalidateVisual();
     }
 
-    private void CommitAndPush(string commitMessage, string repositoryPath)
+    private async void CommitAndPush(string commitMessage, string repositoryPath)
     {
         try
         {
@@ -348,10 +350,10 @@ public partial class MainWindow : Window
             };
 
             // 执行 git commit
-            ExecuteGitCommand(repositoryPath, $"commit -a -m \"{commitMessage}\"");
+            await ExecuteGitCommand(repositoryPath, $"commit -a -m \"{commitMessage}\"");
 
             // 执行 git push
-            ExecuteGitCommand(repositoryPath, "push");
+            await ExecuteGitCommand(repositoryPath, "push");
         }
         catch (Exception ex)
         {
@@ -359,33 +361,17 @@ public partial class MainWindow : Window
         }
     }
 
-    void ExecuteGitCommand(string workingDirectory, string arguments)
+    async Task ExecuteGitCommand(string workingDirectory, string arguments)
     {
-        ProcessStartInfo processStartInfo = new ProcessStartInfo
+        var result = await Cli.Wrap("git")
+            .WithArguments(arguments)
+            .WithWorkingDirectory(workingDirectory)
+            .ExecuteBufferedAsync();
+
+        _logger.Info($"Output: {result.StandardOutput}");
+        if (!string.IsNullOrEmpty(result.StandardError))
         {
-            FileName = "git",
-            Arguments = arguments,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            WorkingDirectory = workingDirectory
-        };
-
-        using (Process process = new Process { StartInfo = processStartInfo })
-        {
-            process.Start();
-
-            string output = process.StandardOutput.ReadToEnd();
-            string error = process.StandardError.ReadToEnd();
-
-            process.WaitForExit();
-
-             _logger.Debug($"Output: {output}");
-            if (!string.IsNullOrEmpty(error))
-            {
-                _logger.Debug($"Error: {error}");
-            }
+            _logger.Error($"Error: {result.StandardError}");
         }
     }
 }
