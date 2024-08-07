@@ -9,6 +9,7 @@ using NLog;
 using System.Diagnostics;
 using CliWrap;
 using CliWrap.Buffered;
+using System.Text;
 
 namespace RunningLog;
 
@@ -368,10 +369,14 @@ public partial class MainWindow : Window
             .WithWorkingDirectory(workingDirectory)
             .ExecuteBufferedAsync();
 
-        _logger.Info($"Output: {result.StandardOutput}");
-        if (!string.IsNullOrEmpty(result.StandardError))
+        // 直接使用输出
+        string output = result.StandardOutput;
+        string error = result.StandardError;
+
+        _logger.Info($"Output: {output}");
+        if (!string.IsNullOrEmpty(error))
         {
-            _logger.Error($"Error: {result.StandardError}");
+            _logger.Error($"Error: {error}");
         }
     }
 }
