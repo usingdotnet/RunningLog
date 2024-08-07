@@ -359,7 +359,7 @@ public partial class MainWindow : Window
         }
     }
 
-    static void ExecuteGitCommand(string workingDirectory, string arguments)
+    void ExecuteGitCommand(string workingDirectory, string arguments)
     {
         ProcessStartInfo processStartInfo = new ProcessStartInfo
         {
@@ -381,10 +381,10 @@ public partial class MainWindow : Window
 
             process.WaitForExit();
 
-            Console.WriteLine($"Output: {output}");
+             _logger.Debug($"Output: {output}");
             if (!string.IsNullOrEmpty(error))
             {
-                Console.WriteLine($"Error: {error}");
+                _logger.Debug($"Error: {error}");
             }
         }
     }
