@@ -6,6 +6,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using NLog;
+using System.Diagnostics;
 
 namespace RunningLog;
 
@@ -305,6 +306,11 @@ public partial class MainWindow : Window
 
             // 重新绘制
             skElement.InvalidateVisual();
+
+            string commitMessage = $"跑步 {distance} 公里";
+            string repositoryPath = @"E:\Code\MyCode\RunningLog";
+
+            CommitAndPush(commitMessage, repositoryPath);
         }
         else
         {
@@ -322,5 +328,64 @@ public partial class MainWindow : Window
     {
         _isDarkMode = true;
         skElement.InvalidateVisual();
+    }
+
+    private void CommitAndPush(string commitMessage, string repositoryPath)
+    {
+        try
+        {
+            // 设置要运行命令的工作目录
+            string workingDirectory = repositoryPath;
+
+            // 创建 ProcessStartInfo 对象
+            ProcessStartInfo startInfo = new ProcessStartInfo("cmd")
+            {
+                RedirectStandardInput = true,
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                WorkingDirectory = workingDirectory,
+            };
+
+            // 执行 git commit
+            ExecuteGitCommand(repositoryPath, $"commit -a -m \"{commitMessage}\"");
+
+            // 执行 git push
+            ExecuteGitCommand(repositoryPath, "push");
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"An error occurred: {ex.Message}");
+        }
+    }
+
+    static void ExecuteGitCommand(string workingDirectory, string arguments)
+    {
+        ProcessStartInfo processStartInfo = new ProcessStartInfo
+        {
+            FileName = "git",
+            Arguments = arguments,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            WorkingDirectory = workingDirectory
+        };
+
+        using (Process process = new Process { StartInfo = processStartInfo })
+        {
+            process.Start();
+
+            string output = process.StandardOutput.ReadToEnd();
+            string error = process.StandardError.ReadToEnd();
+
+            process.WaitForExit();
+
+            Console.WriteLine($"Output: {output}");
+            if (!string.IsNullOrEmpty(error))
+            {
+                Console.WriteLine($"Error: {error}");
+            }
+        }
     }
 }
