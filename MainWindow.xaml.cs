@@ -47,6 +47,12 @@ public partial class MainWindow : Window
         this.Left = (screenWidth - this.Width) / 2;
 
         LoadData();
+        DateTime today = DateTime.Now.Date;
+
+        if (_data.TryGetValue(today, out double dis))
+        {
+            TxtDistance.Text = dis.ToString();
+        }
     }
 
     private void MainWindow_OnLoaded(object sender, RoutedEventArgs e)
