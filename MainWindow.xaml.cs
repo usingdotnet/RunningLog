@@ -117,16 +117,6 @@ public partial class MainWindow : Window
             );
     }
 
-    private void OnYearButtonClick(object sender, RoutedEventArgs e)
-    {
-        if (sender is Button button && int.TryParse(button.Content.ToString(), out int year))
-        {
-            _year = year;
-            LoadData();
-            skElement.InvalidateVisual();
-        }
-    }
-
     private void OnPaintSurface(object sender, SKPaintSurfaceEventArgs e)
     {
         var canvas = e.Surface.Canvas;
@@ -410,6 +400,29 @@ public partial class MainWindow : Window
 
     private static ChineseDayOfWeek GetChineseDayOfWeek(DayOfWeek dayOfWeek)
         => (ChineseDayOfWeek)(((int)dayOfWeek + 6) % 7);
+    private void OnYearButtonClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button button && int.TryParse(button.Content.ToString(), out int year))
+        {
+            _year = year;
+            LoadData();
+            skElement.InvalidateVisual();
+        }
+    }
+
+    private void BtnLightMode_OnClick(object sender, RoutedEventArgs e)
+    {
+        _isDarkMode = false;
+        SaveConfig();
+        skElement.InvalidateVisual();
+    }
+
+    private void BtnDarkMode_OnClick(object sender, RoutedEventArgs e)
+    {
+        _isDarkMode = true;
+        SaveConfig();
+        skElement.InvalidateVisual();
+    }
 
     private void BtnOk_OnClick(object sender, RoutedEventArgs e)
     {
@@ -422,6 +435,46 @@ public partial class MainWindow : Window
         BackupFiles(selectedDate.Year);
         UpdateDataAndSave(selectedDate, distance);
         ShowMessage("添加完成。", MessageType.Success);
+    }
+
+    private void BtnRevert_OnClick(object sender, RoutedEventArgs e)
+    {
+        string csvFile = Path.Combine(_dataDir, $"{_year}.csv");
+        string pngFile = Path.Combine(_dataDir, $"{_year}.png");
+        string csvBackup = Path.Combine(_dataDir, $"{_year}.csv.bak");
+        string pngBackup = Path.Combine(_dataDir, $"{_year}.png.bak");
+
+        if (File.Exists(csvBackup) && File.Exists(pngBackup))
+        {
+            File.Copy(csvBackup, csvFile, true);
+            File.Copy(pngBackup, pngFile, true);
+            LoadData();
+            skElement.InvalidateVisual();
+            ShowMessage("已成功撤销最近的修改。", MessageType.Success);
+        }
+        else
+        {
+            ShowMessage("没有可用的备份文件。", MessageType.Warning);
+        }
+    }
+
+    private async void BtnPublish_OnClick(object sender, RoutedEventArgs e)
+    {
+        if (!IsGitRepository())
+        {
+            ShowMessage("当前目录不是Git仓库。", MessageType.Error);
+            return;
+        }
+
+        var lastRun = _data.OrderByDescending(x => x.Key).FirstOrDefault();
+        if (lastRun.Key != default)
+        {
+            await CommitAndPush($"跑步 {lastRun.Value:F2} 公里");
+        }
+        else
+        {
+            ShowMessage("没有可发布的跑步记录。", MessageType.Error);
+        }
     }
 
     private void BackupFiles(int year)
@@ -480,20 +533,6 @@ public partial class MainWindow : Window
         File.WriteAllLines(file, csvLines);
     }
 
-    private void BtnLightMode_OnClick(object sender, RoutedEventArgs e)
-    {
-        _isDarkMode = false;
-        SaveConfig();
-        skElement.InvalidateVisual();
-    }
-
-    private void BtnDarkMode_OnClick(object sender, RoutedEventArgs e)
-    {
-        _isDarkMode = true;
-        SaveConfig();
-        skElement.InvalidateVisual();
-    }
-
     private async Task CommitAndPush(string commitMessage)
     {
         try
@@ -534,46 +573,6 @@ public partial class MainWindow : Window
             .WithStandardOutputPipe(PipeTarget.ToDelegate(s => _logger.Debug(s)))
             .WithStandardErrorPipe(PipeTarget.ToDelegate(s => _logger.Debug(s)))
             .ExecuteAsync();
-    }
-
-    private void BtnRevert_OnClick(object sender, RoutedEventArgs e)
-    {
-        string csvFile = Path.Combine(_dataDir, $"{_year}.csv");
-        string pngFile = Path.Combine(_dataDir, $"{_year}.png");
-        string csvBackup = Path.Combine(_dataDir, $"{_year}.csv.bak");
-        string pngBackup = Path.Combine(_dataDir, $"{_year}.png.bak");
-
-        if (File.Exists(csvBackup) && File.Exists(pngBackup))
-        {
-            File.Copy(csvBackup, csvFile, true);
-            File.Copy(pngBackup, pngFile, true);
-            LoadData();
-            skElement.InvalidateVisual();
-            ShowMessage("已成功撤销最近的修改。", MessageType.Success);
-        }
-        else
-        {
-            ShowMessage("没有可用的备份文件。", MessageType.Warning);
-        }
-    }
-
-    private async void BtnPublish_OnClick(object sender, RoutedEventArgs e)
-    {
-        if (!IsGitRepository())
-        {
-            ShowMessage("当前目录不是Git仓库。", MessageType.Error);
-            return;
-        }
-
-        var lastRun = _data.OrderByDescending(x => x.Key).FirstOrDefault();
-        if (lastRun.Key != default)
-        {
-            await CommitAndPush($"跑步 {lastRun.Value:F2} 公里");
-        }
-        else
-        {
-            ShowMessage("没有可发布的跑步记录。", MessageType.Error);
-        }
     }
 
     private bool IsGitRepository()
