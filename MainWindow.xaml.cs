@@ -12,6 +12,7 @@ using CliWrap;
 using Tomlet;
 using Tomlet.Models;
 using System.Xml.Serialization;
+using CliWrap.Buffered;
 
 namespace RunningLog;
 
@@ -73,6 +74,7 @@ public partial class MainWindow : Window
         InitializeWindowPosition();
         LoadData();
         InitializeTodayDistance();
+        BtnPublish.Visibility = IsGitRepository() ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void MainWindow_OnLoaded(object sender, RoutedEventArgs e)
@@ -238,7 +240,7 @@ public partial class MainWindow : Window
     private void DrawLegend(SKCanvas canvas)
     {
         float legendY = CalculateHeatmapBottom() + 20; // 图例位置在热力图下方20像素
-        float legendX = FixedWidth - 11 * CellSize - 40; // 左移40像素，为"10km"文字腾出空间
+        float legendX = FixedWidth - 11 * CellSize - 60; // 左移40像素，为"10km"文字腾出空间
 
         var paint = new SKPaint
         {
@@ -413,12 +415,24 @@ public partial class MainWindow : Window
     {
         if (!ValidateInput(out DateTime selectedDate, out double distance))
         {
-            MessageBox.Show("请输入有效的距离和日期。", "输入错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            ShowMessage("请输入有效的距离和日期。",MessageType.Error);
             return;
         }
 
+        BackupFiles(selectedDate.Year);
         UpdateDataAndSave(selectedDate, distance);
-        await CommitAndPush($"跑步 {distance} 公里");
+        ShowMessage("添加完成。", MessageType.Success);
+    }
+
+    private void BackupFiles(int year)
+    {
+        string csvFile = Path.Combine(_dataDir, $"{year}.csv");
+        string pngFile = Path.Combine(_dataDir, $"{year}.png");
+        string csvBackup = Path.Combine(_dataDir, $"{year}.csv.bak");
+        string pngBackup = Path.Combine(_dataDir, $"{year}.png.bak");
+
+        if (File.Exists(csvFile)) File.Copy(csvFile, csvBackup, true);
+        if (File.Exists(pngFile)) File.Copy(pngFile, pngBackup, true);
     }
 
     private bool ValidateInput(out DateTime selectedDate, out double distance)
@@ -484,13 +498,32 @@ public partial class MainWindow : Window
     {
         try
         {
+            // 检查仓库状态
+            string status = await GetGitStatus();
+            if (string.IsNullOrWhiteSpace(status))
+            {
+                ShowMessage("没有需要提交的更改。", MessageType.Warning);
+                return;
+            }
+
             await ExecuteGitCommand($"commit -a -m \"{commitMessage}\"");
             await ExecuteGitCommand("push");
+            ShowMessage("已成功发布最新的跑步记录。", MessageType.Success);
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"发生错误: {ex.Message}");
+            ShowMessage($"发生错误: {ex.Message}", MessageType.Error);
         }
+    }
+
+    private async Task<string> GetGitStatus()
+    {
+        var result = await Cli.Wrap("git")
+            .WithArguments("status --porcelain")
+            .WithWorkingDirectory(_dataDir)
+            .ExecuteBufferedAsync();
+
+        return result.StandardOutput.Trim();
     }
 
     private async Task ExecuteGitCommand(string arguments)
@@ -501,5 +534,55 @@ public partial class MainWindow : Window
             .WithStandardOutputPipe(PipeTarget.ToDelegate(s => _logger.Debug(s)))
             .WithStandardErrorPipe(PipeTarget.ToDelegate(s => _logger.Debug(s)))
             .ExecuteAsync();
+    }
+
+    private void BtnRevert_OnClick(object sender, RoutedEventArgs e)
+    {
+        string csvFile = Path.Combine(_dataDir, $"{_year}.csv");
+        string pngFile = Path.Combine(_dataDir, $"{_year}.png");
+        string csvBackup = Path.Combine(_dataDir, $"{_year}.csv.bak");
+        string pngBackup = Path.Combine(_dataDir, $"{_year}.png.bak");
+
+        if (File.Exists(csvBackup) && File.Exists(pngBackup))
+        {
+            File.Copy(csvBackup, csvFile, true);
+            File.Copy(pngBackup, pngFile, true);
+            LoadData();
+            skElement.InvalidateVisual();
+            ShowMessage("已成功撤销最近的修改。", MessageType.Success);
+        }
+        else
+        {
+            ShowMessage("没有可用的备份文件。", MessageType.Warning);
+        }
+    }
+
+    private async void BtnPublish_OnClick(object sender, RoutedEventArgs e)
+    {
+        if (!IsGitRepository())
+        {
+            ShowMessage("当前目录不是Git仓库。", MessageType.Error);
+            return;
+        }
+
+        var lastRun = _data.OrderByDescending(x => x.Key).FirstOrDefault();
+        if (lastRun.Key != default)
+        {
+            await CommitAndPush($"跑步 {lastRun.Value:F2} 公里");
+        }
+        else
+        {
+            ShowMessage("没有可发布的跑步记录。", MessageType.Error);
+        }
+    }
+
+    private bool IsGitRepository()
+    {
+        return Directory.Exists(Path.Combine(_dataDir, ".git"));
+    }
+
+    private void ShowMessage(string message, MessageType type)
+    {
+        SlideMessage.ShowMessage(message, type);
     }
 }

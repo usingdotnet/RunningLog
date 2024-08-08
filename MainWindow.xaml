@@ -7,7 +7,7 @@
         mc:Ignorable="d" 
         xmlns:skia="clr-namespace:SkiaSharp.Views.WPF;assembly=SkiaSharp.Views.WPF"
         xmlns:sys="clr-namespace:System;assembly=System.Runtime" Loaded="MainWindow_OnLoaded"
-        Title="跑步日志" Height="400" Width="940">
+        Title="跑步日志" Height="440" Width="940">
     <Grid>
         <Grid.Resources>
             <Style TargetType="Button">
@@ -20,7 +20,7 @@
         <Grid.RowDefinitions>
             <RowDefinition/>
             <RowDefinition Height="7*"/>
-            <RowDefinition/>
+            <RowDefinition Height="50"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="7*"/>
@@ -61,11 +61,14 @@
                 </Style>
             </StackPanel.Resources>
             <DatePicker DisplayDate="" CalendarStyle="{StaticResource styleCalendar}" SelectedDate="{x:Static sys:DateTime.Now}" 
-                        VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Name="DpDate"/>
-            <Label Content="距离："/>
-            <TextBox Name="TxtDistance" Width="60" Text="5" VerticalContentAlignment="Center" HorizontalContentAlignment="Right"/>
-            <Label Content="Km"/>
-            <Button Name="BtnOk" Content="添加" Margin="5,0" Width="60" Click="BtnOk_OnClick"/>
+                        VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Name="DpDate" Margin="5"/>
+            <Label Content="距离：" VerticalAlignment="Center" Margin="5"/>
+            <TextBox Name="TxtDistance" Width="60" Text="5" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
+            <Label Content="公里" VerticalAlignment="Center" Margin="5"/>
+            <Button Name="BtnOk" Content="添加" Margin="30,5,5,5" Width="60" Click="BtnOk_OnClick"/>
+            <Button Name="BtnRevert" Content="撤销" Margin="30,5,5,5" Width="60" Click="BtnRevert_OnClick"/>
+            <Button Name="BtnPublish" Content="发布" Margin="30,5,5,5" Width="60" Click="BtnPublish_OnClick"/>
         </StackPanel>
+        <local:SlideMessage x:Name="SlideMessage" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,0,0,0" Panel.ZIndex="1000"/>
     </Grid>
 </Window>
