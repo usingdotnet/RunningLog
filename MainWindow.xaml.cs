@@ -228,17 +228,19 @@ public partial class MainWindow : Window
         for (int i = 0; i <= 10; i++)
         {
             float x = legendX + i * CellSize;
-            SKColor color = i == 0
-                ? (_isDarkMode ? new SKColor(68, 68, 68) : SKColors.LightGray)
-                : GetDayColor(i);
+            SKColor color = GetDayColor(i);
             paint.Color = color;
 
             canvas.DrawRect(new SKRect(x, legendY, x + CellSize, legendY + CellSize), paint);
         }
 
+        float textOffsetY = textPaint.TextSize / 2;
+        float textOffsetX = 5;
+
         // 绘制图例文字
-        canvas.DrawText("0km", legendX + CellSize / 2 - textPaint.MeasureText("0km") / 2 - 2*CellSize, legendY + CellSize / 2 + textPaint.TextSize / 2, textPaint);
-        canvas.DrawText("10km", legendX + 11 * CellSize + 5, legendY + CellSize / 2 + textPaint.TextSize / 2, textPaint);
+        canvas.DrawText("0km", legendX + CellSize / 2 - textPaint.MeasureText("0km") / 2 - 2 * CellSize, legendY + CellSize / 2 + textOffsetY, textPaint);
+        canvas.DrawText("5km", legendX + 6 * CellSize - textPaint.MeasureText("5km") / 2 + 4, legendY + CellSize + textOffsetY + textOffsetX, textPaint);
+        canvas.DrawText("10km", legendX + 11 * CellSize + textOffsetX, legendY + CellSize / 2 + textOffsetY, textPaint);
     }
 
     private void DrawHeatmap(SKCanvas canvas)
@@ -300,7 +302,7 @@ public partial class MainWindow : Window
                 var date = startDate.AddDays(index);
                 double v = _data.TryGetValue(date, out double value) ? value : 0;
 
-                SKColor color =GetDayColor(v);
+                SKColor color = GetDayColor(v);
 
                 labelPaint.Color = color;
 
@@ -338,21 +340,20 @@ public partial class MainWindow : Window
         // 将距离限制在 1-10km 范围内
         distance = Math.Max(minDistance, Math.Min(maxDistance, distance));
 
-        // 计算归一化的距离值 (0.0 - 1.0)
-        double normalizedDistance = (distance - minDistance) / (maxDistance - minDistance);
+        // 使用更强的非线性函数计算归一化的距离值 (0.0 - 1.0)
+        double normalizedDistance = Math.Pow((distance - minDistance) / (maxDistance - minDistance), 0.9);
 
-        // 定义起始颜色（更浅的绿）和结束颜色（更深的绿）
-        SKColor startColor = new SKColor(220, 255, 180);  // 更浅的绿
-        SKColor endColor = new SKColor(0, 100, 0);       // 更深的绿
+        // 定义起始颜色（黄色）和结束颜色（红色）
+        SKColor startColor = new SKColor(255, 255, 0);  // 黄色
+        SKColor endColor = new SKColor(255, 0, 0);      // 红色
 
-        // 使用线性插值计算中间颜色
+        // 使用插值计算中间颜色
         byte r = (byte)(startColor.Red + (endColor.Red - startColor.Red) * normalizedDistance);
         byte g = (byte)(startColor.Green + (endColor.Green - startColor.Green) * normalizedDistance);
         byte b = (byte)(startColor.Blue + (endColor.Blue - startColor.Blue) * normalizedDistance);
 
         return new SKColor(r, g, b);
     }
-
     private static ChineseDayOfWeek GetChineseDayOfWeek(DayOfWeek dayOfWeek)
         => (ChineseDayOfWeek)(((int)dayOfWeek + 6) % 7);
 
