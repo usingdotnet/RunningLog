@@ -102,6 +102,8 @@ public partial class MainWindow : Window
         DrawBackground(canvas);
         DrawHeader(canvas);
         DrawHeatmap(canvas);
+        DrawStats(canvas);  // 新增：绘制左下角的统计信息
+        DrawLegend(canvas); // 添加这一行
         SaveAsPng(e.Surface);
     }
 
@@ -124,11 +126,48 @@ public partial class MainWindow : Window
             Color = textColor
         };
 
+        var lastRunPaint = new SKPaint
+        {
+            IsAntialias = true,
+            Style = SKPaintStyle.Fill,
+            TextSize = 14,
+            Typeface = SKTypeface.FromFamilyName("Microsoft YaHei"),
+            Color = textColor
+        };
+
+        string yearText = $"{_year}";
+        var yearTextWidth = yearPaint.MeasureText(yearText);
+        var centerX = (FixedWidth - yearTextWidth) / 2;
+
+        canvas.DrawText(yearText, centerX, YearLabelHeight, yearPaint);
+
+        // 绘制最后一次跑步信息
+        var lastRun = _data.OrderByDescending(x => x.Key).FirstOrDefault();
+        if (lastRun.Key != default)
+        {
+            string lastRunText = $"最近一次跑步：{lastRun.Key:yyyy-MM-dd}, {lastRun.Value:F2} km";
+            var lastRunTextWidth = lastRunPaint.MeasureText(lastRunText);
+            canvas.DrawText(lastRunText, FixedWidth - lastRunTextWidth - 20, YearLabelHeight + StatsLabelHeight, lastRunPaint);
+        }
+    }
+
+    private float CalculateHeatmapBottom()
+    {
+        var startDate = new DateTime(_year, 1, 1);
+        int totalDays = DateTime.IsLeapYear(_year) ? 366 : 365;
+        int totalRows = 7; // 一周7天
+        return HeaderHeight + LabelHeight + totalRows * (CellSize + CellPadding) + CellPadding;
+    }
+
+    private void DrawStats(SKCanvas canvas)
+    {
+        var textColor = _isDarkMode ? SKColors.White : new SKColor(34, 34, 34);
+
         var statsPaint = new SKPaint
         {
             IsAntialias = true,
             Style = SKPaintStyle.Fill,
-            TextSize = 16,
+            TextSize = 14,
             Typeface = SKTypeface.FromFamilyName("Microsoft YaHei"),
             Color = textColor
         };
@@ -136,16 +175,70 @@ public partial class MainWindow : Window
         int runningDays = _data.Count(entry => entry.Value > 0);
         double totalDistance = _data.Values.Sum();
 
-        string statsText = $"共跑步 {runningDays} 天，总里程 {totalDistance:F2} km";
-        string yearText = $"{_year}";
+        string daysLabel = "跑步天数:";
+        string daysValue = $"{runningDays}";
+        string daysUnit = " 天";
+        string distanceLabel = "总里程:";
+        string distanceValue = $"{totalDistance:F2}";
+        string distanceUnit = " km";
 
-        var yearTextWidth = yearPaint.MeasureText(yearText);
-        var statsTextWidth = statsPaint.MeasureText(statsText);
+        float labelWidth = Math.Max(statsPaint.MeasureText(daysLabel), statsPaint.MeasureText(distanceLabel));
+        float valueWidth = Math.Max(statsPaint.MeasureText(daysValue), statsPaint.MeasureText(distanceValue));
+        float unitWidth = Math.Max(statsPaint.MeasureText(daysUnit), statsPaint.MeasureText(distanceUnit));
 
-        var centerX = (FixedWidth - yearTextWidth) / 2;
+        // 计算热力图底部位置
+        float heatmapBottom = CalculateHeatmapBottom();
 
-        canvas.DrawText(yearText, centerX, YearLabelHeight, yearPaint);
-        canvas.DrawText(statsText, FixedWidth - statsTextWidth - 20, YearLabelHeight + StatsLabelHeight, statsPaint);
+        // 设置统计信息的垂直位置
+        float statsY1 = heatmapBottom + 20; // 第一行文本的Y坐标
+        float statsY2 = statsY1 + 20; // 第二行文本的Y坐标
+
+        float labelX = 30;
+        float valueX = labelX + labelWidth + 10; // 10是标签和值之间的间距
+        float unitX = valueX + valueWidth + 5; // 5是值和单位之间的间距
+
+        canvas.DrawText(daysLabel, labelX, statsY1, statsPaint);
+        canvas.DrawText(daysValue, unitX - statsPaint.MeasureText(daysValue), statsY1, statsPaint);
+        canvas.DrawText(daysUnit, unitX, statsY1, statsPaint);
+
+        canvas.DrawText(distanceLabel, labelX, statsY2, statsPaint);
+        canvas.DrawText(distanceValue, unitX - statsPaint.MeasureText(distanceValue), statsY2, statsPaint);
+        canvas.DrawText(distanceUnit, unitX, statsY2, statsPaint);
+    }
+
+    private void DrawLegend(SKCanvas canvas)
+    {
+        float legendY = CalculateHeatmapBottom() + 20; // 图例位置在热力图下方20像素
+        float legendX = FixedWidth - 11 * CellSize - 40; // 左移40像素，为"10km"文字腾出空间
+
+        var paint = new SKPaint
+        {
+            IsAntialias = true,
+            Style = SKPaintStyle.Fill
+        };
+
+        var textPaint = new SKPaint
+        {
+            IsAntialias = true,
+            Color = _isDarkMode ? SKColors.White : SKColors.Black,
+            TextSize = 12,
+            Typeface = SKTypeface.FromFamilyName("Microsoft YaHei")
+        };
+
+        for (int i = 0; i <= 10; i++)
+        {
+            float x = legendX + i * CellSize;
+            SKColor color = i == 0
+                ? (_isDarkMode ? new SKColor(68, 68, 68) : SKColors.LightGray)
+                : GetDayColor(i);
+            paint.Color = color;
+
+            canvas.DrawRect(new SKRect(x, legendY, x + CellSize, legendY + CellSize), paint);
+        }
+
+        // 绘制图例文字
+        canvas.DrawText("0km", legendX + CellSize / 2 - textPaint.MeasureText("0km") / 2 - 2*CellSize, legendY + CellSize / 2 + textPaint.TextSize / 2, textPaint);
+        canvas.DrawText("10km", legendX + 11 * CellSize + 5, legendY + CellSize / 2 + textPaint.TextSize / 2, textPaint);
     }
 
     private void DrawHeatmap(SKCanvas canvas)
@@ -207,9 +300,7 @@ public partial class MainWindow : Window
                 var date = startDate.AddDays(index);
                 double v = _data.TryGetValue(date, out double value) ? value : 0;
 
-                SKColor color = _isDarkMode
-                    ? (v == 0 ? new SKColor(68, 68, 68) : GetDayColor(v))
-                    : (v == 0 ? SKColors.LightGray : GetDayColor(v));
+                SKColor color =GetDayColor(v);
 
                 labelPaint.Color = color;
 
@@ -234,26 +325,27 @@ public partial class MainWindow : Window
         data.SaveTo(stream);
     }
 
-    private static SKColor GetDayColor(double distance)
+    private SKColor GetDayColor(double distance)
     {
-        double lowThreshold = 2.5;
-        double highThreshold = 5.0;
-
-        if (distance < lowThreshold)
+        if (distance == 0)
         {
-            return new SKColor(173, 255, 47);
+            return _isDarkMode ? new SKColor(68, 68, 68) : SKColors.LightGray;
         }
 
-        if (distance >= highThreshold)
-        {
-            return new SKColor(0, 128, 0);
-        }
+        double minDistance = 1.0;
+        double maxDistance = 10.0;
 
-        SKColor startColor = new SKColor(173, 255, 47);
-        SKColor endColor = new SKColor(0, 128, 0);
+        // 将距离限制在 1-10km 范围内
+        distance = Math.Max(minDistance, Math.Min(maxDistance, distance));
 
-        double normalizedDistance = (distance - lowThreshold) / (highThreshold - lowThreshold);
+        // 计算归一化的距离值 (0.0 - 1.0)
+        double normalizedDistance = (distance - minDistance) / (maxDistance - minDistance);
 
+        // 定义起始颜色（更浅的绿）和结束颜色（更深的绿）
+        SKColor startColor = new SKColor(220, 255, 180);  // 更浅的绿
+        SKColor endColor = new SKColor(0, 100, 0);       // 更深的绿
+
+        // 使用线性插值计算中间颜色
         byte r = (byte)(startColor.Red + (endColor.Red - startColor.Red) * normalizedDistance);
         byte g = (byte)(startColor.Green + (endColor.Green - startColor.Green) * normalizedDistance);
         byte b = (byte)(startColor.Blue + (endColor.Blue - startColor.Blue) * normalizedDistance);
