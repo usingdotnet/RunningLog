@@ -411,7 +411,7 @@ public partial class MainWindow : Window
     private static ChineseDayOfWeek GetChineseDayOfWeek(DayOfWeek dayOfWeek)
         => (ChineseDayOfWeek)(((int)dayOfWeek + 6) % 7);
 
-    private async void BtnOk_OnClick(object sender, RoutedEventArgs e)
+    private void BtnOk_OnClick(object sender, RoutedEventArgs e)
     {
         if (!ValidateInput(out DateTime selectedDate, out double distance))
         {
