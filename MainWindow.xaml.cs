@@ -9,8 +9,9 @@ using System.Windows;
 using System.Windows.Controls;
 using NLog;
 using CliWrap;
-using CliWrap.Buffered;
-using System.Threading.Tasks;
+using Tomlet;
+using Tomlet.Models;
+using System.Xml.Serialization;
 
 namespace RunningLog;
 
@@ -23,7 +24,7 @@ public partial class MainWindow : Window
 {
     private int _year = DateTime.Now.Year;
     private Dictionary<DateTime, double> _data = [];
-    private readonly string _dataDir = @"E:\Code\MyCode\RunningLog\data";
+    private string _dataDir = "";
     private readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private bool _isDarkMode = true;
     private readonly DateTime _today = DateTime.Now.Date;
@@ -37,10 +38,38 @@ public partial class MainWindow : Window
     private const int YearLabelHeight = 40;
     private const int StatsLabelHeight = 30;
     private const int HeaderHeight = YearLabelHeight + StatsLabelHeight + 20;
+    private AppConfig _config;
+    private const string ConfigFile = "config.toml";
+
+    private void LoadConfig()
+    {
+        if (File.Exists(ConfigFile))
+        {
+            string tomlString = File.ReadAllText(ConfigFile);
+            _config = TomletMain.To<AppConfig>(tomlString);
+        }
+        else
+        {
+            _config = new AppConfig();
+            SaveConfig();
+        }
+
+        _isDarkMode = _config.IsDarkMode;
+        _dataDir = _config.DataDir;
+    }
+
+    private void SaveConfig()
+    {
+        _config.IsDarkMode = _isDarkMode;
+        _config.DataDir = _dataDir;
+        string tomlString = TomletMain.TomlStringFrom(_config);
+        File.WriteAllText(ConfigFile, tomlString);
+    }
 
     public MainWindow()
     {
         InitializeComponent();
+        LoadConfig();
         InitializeWindowPosition();
         LoadData();
         InitializeTodayDistance();
@@ -104,7 +133,7 @@ public partial class MainWindow : Window
         DrawHeatmap(canvas);
         DrawStats(canvas);  // 新增：绘制左下角的统计信息
         DrawLegend(canvas); // 添加这一行
-        SaveAsPng(e.Surface);
+        SavePng(e.Surface);
     }
 
     private void DrawBackground(SKCanvas canvas)
@@ -318,8 +347,30 @@ public partial class MainWindow : Window
         }
     }
 
-    private void SaveAsPng(SKSurface surface)
+    private void SavePng(SKSurface surface)
     {
+        string csvFilePath = Path.Combine(_config.DataDir, $"{_year}.csv");
+        string pngFilePath = Path.Combine(_config.DataDir, $"{_year}.png");
+
+        if (File.Exists(csvFilePath) && File.Exists(pngFilePath))
+        {
+            DateTime csvLastModified = File.GetLastWriteTime(csvFilePath);
+            DateTime pngLastModified = File.GetLastWriteTime(pngFilePath);
+
+            if (csvLastModified <= pngLastModified)
+            {
+                // CSV文件未修改或PNG文件比CSV文件新,无需重新生成PNG
+                return;
+            }
+        }
+
+        else if (!File.Exists(csvFilePath))
+        {
+            // CSV文件不存在,无法生成PNG
+            return;
+        }
+
+        // 生成PNG的代码
         string png = Path.Combine(_dataDir, $"{_year}.png");
         using var image = surface.Snapshot();
         using var data = image.Encode(SKEncodedImageFormat.Png, 80);
@@ -354,6 +405,7 @@ public partial class MainWindow : Window
 
         return new SKColor(r, g, b);
     }
+
     private static ChineseDayOfWeek GetChineseDayOfWeek(DayOfWeek dayOfWeek)
         => (ChineseDayOfWeek)(((int)dayOfWeek + 6) % 7);
 
@@ -366,7 +418,7 @@ public partial class MainWindow : Window
         }
 
         UpdateDataAndSave(selectedDate, distance);
-        await CommitAndPush($"跑步 {distance} 公里", @"E:\Code\MyCode\RunningLog");
+        await CommitAndPush($"跑步 {distance} 公里");
     }
 
     private bool ValidateInput(out DateTime selectedDate, out double distance)
@@ -417,21 +469,23 @@ public partial class MainWindow : Window
     private void BtnLightMode_OnClick(object sender, RoutedEventArgs e)
     {
         _isDarkMode = false;
+        SaveConfig();
         skElement.InvalidateVisual();
     }
 
     private void BtnDarkMode_OnClick(object sender, RoutedEventArgs e)
     {
         _isDarkMode = true;
+        SaveConfig();
         skElement.InvalidateVisual();
     }
 
-    private async Task CommitAndPush(string commitMessage, string repositoryPath)
+    private async Task CommitAndPush(string commitMessage)
     {
         try
         {
-            await ExecuteGitCommand(repositoryPath, $"commit -a -m \"{commitMessage}\"");
-            await ExecuteGitCommand(repositoryPath, "push");
+            await ExecuteGitCommand($"commit -a -m \"{commitMessage}\"");
+            await ExecuteGitCommand("push");
         }
         catch (Exception ex)
         {
@@ -439,11 +493,11 @@ public partial class MainWindow : Window
         }
     }
 
-    private async Task ExecuteGitCommand(string workingDirectory, string arguments)
+    private async Task ExecuteGitCommand(string arguments)
     {
         await Cli.Wrap("git")
             .WithArguments(arguments)
-            .WithWorkingDirectory(workingDirectory)
+            .WithWorkingDirectory(_dataDir)
             .WithStandardOutputPipe(PipeTarget.ToDelegate(s => _logger.Debug(s)))
             .WithStandardErrorPipe(PipeTarget.ToDelegate(s => _logger.Debug(s)))
             .ExecuteAsync();
