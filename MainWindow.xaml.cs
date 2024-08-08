@@ -29,7 +29,7 @@ public partial class MainWindow : Window
     private readonly DateTime _today = DateTime.Now.Date;
 
     private const int CellSize = 12;
-    private const int Padding = 2;
+    private const int CellPadding = 2;
     private const int FixedWidth = 790;
     private const int LabelHeight = 30;
     private const int DayLabelWidth = 30;
@@ -44,6 +44,11 @@ public partial class MainWindow : Window
         InitializeWindowPosition();
         LoadData();
         InitializeTodayDistance();
+    }
+
+    private void MainWindow_OnLoaded(object sender, RoutedEventArgs e)
+    {
+
     }
 
     private void InitializeWindowPosition()
@@ -164,11 +169,11 @@ public partial class MainWindow : Window
     private void DrawDayLabels(SKCanvas canvas, SKPaint labelPaint)
     {
         var daysOfWeek = new[] { "一", "三", "五" };
-        int labelVerticalOffset = (CellSize + Padding) / 2 + 3;
+        int labelVerticalOffset = (CellSize + CellPadding) / 2 + 3;
         for (int i = 0; i < daysOfWeek.Length; i++)
         {
             int row = Array.IndexOf(new[] { "一", "二", "三", "四", "五", "六", "日" }, daysOfWeek[i]);
-            canvas.DrawText(daysOfWeek[i], Padding / 2, HeaderHeight + LabelHeight + row * (CellSize + Padding) + labelVerticalOffset, labelPaint);
+            canvas.DrawText(daysOfWeek[i], CellPadding / 2, HeaderHeight + LabelHeight + row * (CellSize + CellPadding) + labelVerticalOffset, labelPaint);
         }
     }
 
@@ -180,7 +185,7 @@ public partial class MainWindow : Window
             var monthStart = new DateTime(_year, month, 1);
             int daysBeforeMonth = (monthStart - startDate).Days;
             int monthStartCol = (daysBeforeMonth + (int)GetChineseDayOfWeek(startDate.DayOfWeek)) / 7;
-            int monthOffsetX = monthStartCol * (CellSize + Padding) + DayLabelWidth;
+            int monthOffsetX = monthStartCol * (CellSize + CellPadding) + DayLabelWidth;
 
             canvas.DrawText($"{month}月", monthOffsetX, HeaderHeight + MonthLabelHeight / 2, labelPaint);
         }
@@ -209,10 +214,10 @@ public partial class MainWindow : Window
                 labelPaint.Color = color;
 
                 var rect = new SKRect(
-                    col * (CellSize + Padding) + DayLabelWidth,
-                    row * (CellSize + Padding) + HeaderHeight + LabelHeight,
-                    col * (CellSize + Padding) + CellSize + DayLabelWidth,
-                    row * (CellSize + Padding) + CellSize + HeaderHeight + LabelHeight
+                    col * (CellSize + CellPadding) + DayLabelWidth,
+                    row * (CellSize + CellPadding) + HeaderHeight + LabelHeight,
+                    col * (CellSize + CellPadding) + CellSize + DayLabelWidth,
+                    row * (CellSize + CellPadding) + CellSize + HeaderHeight + LabelHeight
                 );
 
                 canvas.DrawRect(rect, labelPaint);
@@ -349,9 +354,5 @@ public partial class MainWindow : Window
             .WithStandardOutputPipe(PipeTarget.ToDelegate(s => _logger.Debug(s)))
             .WithStandardErrorPipe(PipeTarget.ToDelegate(s => _logger.Debug(s)))
             .ExecuteAsync();
-    }
-
-    private void MainWindow_OnLoaded(object sender, RoutedEventArgs e)
-    {
     }
 }
