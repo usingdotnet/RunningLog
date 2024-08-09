@@ -448,6 +448,8 @@ public partial class MainWindow : Window
         {
             File.Copy(csvBackup, csvFile, true);
             File.Copy(pngBackup, pngFile, true);
+            File.Delete(csvBackup); // 删除CSV备份文件
+            File.Delete(pngBackup); // 删除PNG备份文件
             LoadData();
             skElement.InvalidateVisual();
             ShowMessage("已成功撤销最近的修改。", MessageType.Success);
