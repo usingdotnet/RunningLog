@@ -601,4 +601,14 @@ public partial class MainWindow : Window
             }
         }
     }
+
+    private void Exit_Click(object sender, RoutedEventArgs e)
+    {
+        Application.Current.Shutdown();
+    }
+
+    private void About_Click(object sender, RoutedEventArgs e)
+    {
+
+    }
 }

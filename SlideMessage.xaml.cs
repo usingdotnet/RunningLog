@@ -31,9 +31,14 @@ namespace RunningLog
 
             var animation = new DoubleAnimation
             {
-                From = -40,
+                From = -30,
                 To = 0,
-                Duration = TimeSpan.FromSeconds(0.5)
+                Duration = TimeSpan.FromSeconds(0.5),
+                EasingFunction = new ElasticEase
+                {
+                    Oscillations = 1,
+                    Springiness = 1
+                }
             };
 
             MessageBorder.BeginAnimation(Canvas.TopProperty, animation);
@@ -48,19 +53,12 @@ namespace RunningLog
                 var hideAnimation = new DoubleAnimation
                 {
                     From = 0,
-                    To = -40,
-                    Duration = TimeSpan.FromSeconds(0.5)
+                    To = -30,
+                    Duration = TimeSpan.FromSeconds(0.2)
                 };
                 MessageBorder.BeginAnimation(Canvas.TopProperty, hideAnimation);
             };
             timer.Start();
         }
-    }
-
-    public enum MessageType
-    {
-        Success,
-        Warning,
-        Error
     }
 }

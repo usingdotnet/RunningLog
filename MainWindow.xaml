@@ -7,75 +7,92 @@
         mc:Ignorable="d" 
         xmlns:skia="clr-namespace:SkiaSharp.Views.WPF;assembly=SkiaSharp.Views.WPF"
         xmlns:sys="clr-namespace:System;assembly=System.Runtime" Loaded="MainWindow_OnLoaded"
-        Title="跑步日志" Height="440" Width="940">
+        Title="跑步日志" Height="460" Width="940">
     <Grid>
-        <Grid.Resources>
-            <Style TargetType="Button">
-                <Setter Property="Width" Value="60"/>
-                <Setter Property="Height" Value="30"/>
-                <Setter Property="Margin" Value="5"/>
-            </Style>
-        </Grid.Resources>
-
         <Grid.RowDefinitions>
-            <RowDefinition/>
-            <RowDefinition Height="7*"/>
-            <RowDefinition Height="50"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="7*"/>
-            <ColumnDefinition/>
-        </Grid.ColumnDefinitions>
-        <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Content="浅色" Background="White" Foreground="Black" Click="BtnLightMode_OnClick"/>
-            <Button Content="深色" Background="Black" Foreground="White" Click="BtnDarkMode_OnClick"/>
-        </StackPanel>
-        <Border Grid.Row="1" Grid.Column="0" Name="border" Margin="5"
+
+        <Menu Grid.Row="0">
+            <MenuItem Header="文件">
+                <MenuItem Header="退出" Click="Exit_Click"/>
+            </MenuItem>
+            <MenuItem Header="帮助">
+                <MenuItem Header="关于" Click="About_Click"/>
+            </MenuItem>
+        </Menu>
+        <local:SlideMessage Grid.Row="1" x:Name="SlideMessage" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,0,0,0" Panel.ZIndex="-1"/>
+
+        <Grid Grid.Row="2">
+            <Grid.Resources>
+                <Style TargetType="Button">
+                    <Setter Property="Width" Value="60"/>
+                    <Setter Property="Height" Value="30"/>
+                    <Setter Property="Margin" Value="5"/>
+                </Style>
+            </Grid.Resources>
+
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition Height="7*"/>
+                <RowDefinition Height="50"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="7*"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="浅色" Background="White" Foreground="Black" Click="BtnLightMode_OnClick"/>
+                <Button Content="深色" Background="Black" Foreground="White" Click="BtnDarkMode_OnClick"/>
+            </StackPanel>
+            <Border Grid.Row="1" Grid.Column="0" Name="border" Margin="5"
                 Background="White"
                 BorderBrush="Black"
                 BorderThickness="0"
                 ToolTip="{Binding ElementName=skElement, Path=ToolTip}" >
-            <skia:SKElement x:Name="skElement" PaintSurface="OnPaintSurface" />
-        </Border>
-        <StackPanel Grid.Column="1" Grid.Row="1" Orientation="Vertical" Margin="5,5,5,5" 
+                <skia:SKElement x:Name="skElement" PaintSurface="OnPaintSurface" />
+            </Border>
+            <StackPanel Grid.Column="1" Grid.Row="1" Orientation="Vertical" Margin="5,5,5,5" 
                     x:Name="YearButtonsPanel" ButtonBase.Click="OnYearButtonClick">
-            <Button Content="2030"/>
-            <Button Content="2029"/>
-            <Button Content="2028"/>
-            <Button Content="2027"/>
-            <Button Content="2026"/>
-            <Button Content="2025"/>
-            <Button Content="2024"/>
-            <Button Content="2023"/>
-        </StackPanel>
-        <StackPanel Grid.Column="0" Grid.Row="2" Orientation="Horizontal" Margin="5">
-            <StackPanel.Resources>
-                <Style x:Key="styleCalendar" TargetType="{x:Type Calendar}">
-                    <Setter Property="Template">
-                        <Setter.Value>
-                            <ControlTemplate TargetType="{x:Type Calendar}">
-                                <!-- Wrapping in ViewBox will enlarge calendar of that size.-->
-                                <Viewbox Height="300"
+                <Button Content="2030"/>
+                <Button Content="2029"/>
+                <Button Content="2028"/>
+                <Button Content="2027"/>
+                <Button Content="2026"/>
+                <Button Content="2025"/>
+                <Button Content="2024"/>
+                <Button Content="2023"/>
+            </StackPanel>
+            <StackPanel Grid.Column="0" Grid.Row="2" Orientation="Horizontal" Margin="5">
+                <StackPanel.Resources>
+                    <Style x:Key="styleCalendar" TargetType="{x:Type Calendar}">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="{x:Type Calendar}">
+                                    <!-- Wrapping in ViewBox will enlarge calendar of that size.-->
+                                    <Viewbox Height="300"
                                          Width="300">
-                                    <CalendarItem x:Name="PART_CalendarItem"
+                                        <CalendarItem x:Name="PART_CalendarItem"
                                                   Background="{TemplateBinding Background}"
                                                   BorderBrush="{TemplateBinding BorderBrush}"
                                                   BorderThickness="{TemplateBinding BorderThickness}"/>
-                                </Viewbox>
-                            </ControlTemplate>
-                        </Setter.Value>
-                    </Setter>
-                </Style>
-            </StackPanel.Resources>
-            <DatePicker DisplayDate="" CalendarStyle="{StaticResource styleCalendar}" SelectedDate="{x:Static sys:DateTime.Now}" 
+                                    </Viewbox>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </StackPanel.Resources>
+                <DatePicker DisplayDate="" CalendarStyle="{StaticResource styleCalendar}" SelectedDate="{x:Static sys:DateTime.Now}" 
                         VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Name="DpDate" Margin="5"/>
-            <Label Content="距离：" VerticalAlignment="Center" Margin="5"/>
-            <TextBox Name="TxtDistance" Width="60" Text="5" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
-            <Label Content="公里" VerticalAlignment="Center" Margin="5"/>
-            <Button Name="BtnOk" Content="添加" Margin="30,5,5,5" Width="60" Click="BtnOk_OnClick"/>
-            <Button Name="BtnRevert" Content="撤销" Margin="30,5,5,5" Width="60" Click="BtnRevert_OnClick"/>
-            <Button Name="BtnPublish" Content="发布" Margin="30,5,5,5" Width="60" Click="BtnPublish_OnClick"/>
-        </StackPanel>
-        <local:SlideMessage x:Name="SlideMessage" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,0,0,0" Panel.ZIndex="1000"/>
+                <Label Content="距离：" VerticalAlignment="Center" Margin="5"/>
+                <TextBox Name="TxtDistance" Width="60" Text="5" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
+                <Label Content="公里" VerticalAlignment="Center" Margin="5"/>
+                <Button Name="BtnOk" Content="添加" Margin="30,5,5,5" Width="60" Click="BtnOk_OnClick"/>
+                <Button Name="BtnRevert" Content="撤销" Margin="30,5,5,5" Width="60" Click="BtnRevert_OnClick"/>
+                <Button Name="BtnPublish" Content="发布" Margin="30,5,5,5" Width="60" Click="BtnPublish_OnClick"/>
+            </StackPanel>
+        </Grid>
     </Grid>
 </Window>
