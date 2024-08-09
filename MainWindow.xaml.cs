@@ -123,10 +123,9 @@ public partial class MainWindow : Window
         DrawBackground(canvas);
         DrawHeader(canvas);
         DrawHeatmap(canvas);
-        DrawStats(canvas);
-        DrawLegend(canvas);
-
-        SaveSvg(e.Surface);
+        DrawStats(canvas);  // 新增：绘制左下角的统计信息
+        DrawLegend(canvas); // 添加这一行
+        SavePng(e.Surface);
     }
 
     private void DrawBackground(SKCanvas canvas)
@@ -340,45 +339,35 @@ public partial class MainWindow : Window
         }
     }
 
-    private void SaveSvg(SKSurface surface)
+    private void SavePng(SKSurface surface)
     {
         string csvFilePath = Path.Combine(_config.DataDir, $"{_year}.csv");
-        string svgFilePath = Path.Combine(_config.DataDir, $"{_year}.svg");
+        string pngFilePath = Path.Combine(_config.DataDir, $"{_year}.png");
 
-        if (File.Exists(csvFilePath) && File.Exists(svgFilePath))
+        if (File.Exists(csvFilePath) && File.Exists(pngFilePath))
         {
             DateTime csvLastModified = File.GetLastWriteTime(csvFilePath);
-            DateTime svgLastModified = File.GetLastWriteTime(svgFilePath);
+            DateTime pngLastModified = File.GetLastWriteTime(pngFilePath);
 
-            if (csvLastModified <= svgLastModified)
+            if (csvLastModified <= pngLastModified)
             {
-                // CSV文件未修改或SVG文件比CSV文件新,无需重新生成SVG
+                // CSV文件未修改或PNG文件比CSV文件新,无需重新生成PNG
                 return;
             }
         }
+
         else if (!File.Exists(csvFilePath))
         {
-            // CSV文件不存在,无法生成SVG
+            // CSV文件不存在,无法生成PNG
             return;
         }
 
-        // 获取图像的宽度和高度
-        int width = (int)surface.Canvas.DeviceClipBounds.Width;
-        int height = (int)surface.Canvas.DeviceClipBounds.Height;
-
-        // 创建SVG画布
-        using (var stream = File.Create(svgFilePath))
-        {
-            using (var canvas = SKSvgCanvas.Create(SKRect.Create(width, height), stream))
-            {
-                // 在SVG画布上重新绘制
-                DrawBackground(canvas);
-                DrawHeader(canvas);
-                DrawHeatmap(canvas);
-                DrawStats(canvas);
-                DrawLegend(canvas);
-            }
-        }
+        // 生成PNG的代码
+        string png = Path.Combine(_dataDir, $"{_year}.png");
+        using var image = surface.Snapshot();
+        using var data = image.Encode(SKEncodedImageFormat.Png, 80);
+        using var stream = File.OpenWrite(png);
+        data.SaveTo(stream);
     }
 
     private SKColor GetDayColor(double distance)
@@ -451,16 +440,16 @@ public partial class MainWindow : Window
     private void BtnRevert_OnClick(object sender, RoutedEventArgs e)
     {
         string csvFile = Path.Combine(_dataDir, $"{_year}.csv");
-        string svgFile = Path.Combine(_dataDir, $"{_year}.svg");
+        string pngFile = Path.Combine(_dataDir, $"{_year}.png");
         string csvBackup = Path.Combine(_dataDir, $"{_year}.csv.bak");
-        string svgBackup = Path.Combine(_dataDir, $"{_year}.svg.bak");
+        string pngBackup = Path.Combine(_dataDir, $"{_year}.png.bak");
 
-        if (File.Exists(csvBackup) && File.Exists(svgBackup))
+        if (File.Exists(csvBackup) && File.Exists(pngBackup))
         {
             File.Copy(csvBackup, csvFile, true);
-            File.Copy(svgBackup, svgFile, true);
+            File.Copy(pngBackup, pngFile, true);
             File.Delete(csvBackup); // 删除CSV备份文件
-            File.Delete(svgBackup); // 删除svg备份文件
+            File.Delete(pngBackup); // 删除PNG备份文件
             LoadData();
             skElement.InvalidateVisual();
             ShowMessage("已成功撤销最近的修改。", MessageType.Success);
@@ -493,12 +482,12 @@ public partial class MainWindow : Window
     private void BackupFiles(int year)
     {
         string csvFile = Path.Combine(_dataDir, $"{year}.csv");
-        string svgFile = Path.Combine(_dataDir, $"{year}.svg");
+        string pngFile = Path.Combine(_dataDir, $"{year}.png");
         string csvBackup = Path.Combine(_dataDir, $"{year}.csv.bak");
-        string svgBackup = Path.Combine(_dataDir, $"{year}.svg.bak");
+        string pngBackup = Path.Combine(_dataDir, $"{year}.png.bak");
 
         if (File.Exists(csvFile)) File.Copy(csvFile, csvBackup, true);
-        if (File.Exists(svgFile)) File.Copy(svgFile, svgBackup, true);
+        if (File.Exists(pngFile)) File.Copy(pngFile, pngBackup, true);
     }
 
     private bool ValidateInput(out DateTime selectedDate, out double distance)
