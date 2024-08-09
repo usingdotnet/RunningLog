@@ -74,6 +74,7 @@ public partial class MainWindow : Window
         InitializeWindowPosition();
         LoadData();
         InitializeTodayDistance();
+        UpdateYearButtonsVisibility();
         BtnPublish.Visibility = IsGitRepository() ? Visibility.Visible : Visibility.Collapsed;
     }
 
@@ -403,11 +404,12 @@ public partial class MainWindow : Window
 
     private void OnYearButtonClick(object sender, RoutedEventArgs e)
     {
-        if (sender is Button button && int.TryParse(button.Content.ToString(), out int year))
+        if (e.OriginalSource is Button button && int.TryParse(button.Content.ToString(), out int year))
         {
             _year = year;
             LoadData();
             skElement.InvalidateVisual();
+            UpdateYearButtonsVisibility();
         }
     }
 
@@ -586,5 +588,17 @@ public partial class MainWindow : Window
     private void ShowMessage(string message, MessageType type)
     {
         SlideMessage.ShowMessage(message, type);
+    }
+
+    private void UpdateYearButtonsVisibility()
+    {
+        int currentYear = DateTime.Now.Year;
+        foreach (var child in ((StackPanel)FindName("YearButtonsPanel")).Children)
+        {
+            if (child is Button button && int.TryParse(button.Content.ToString(), out int buttonYear))
+            {
+                button.Visibility = buttonYear <= currentYear ? Visibility.Visible : Visibility.Collapsed;
+            }
+        }
     }
 }
