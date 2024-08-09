@@ -166,7 +166,7 @@ public partial class MainWindow : Window
         var lastRun = _data.OrderByDescending(x => x.Key).FirstOrDefault();
         if (lastRun.Key != default)
         {
-            string lastRunText = $"最近一次跑步：{lastRun.Key:yyyy-MM-dd}, {lastRun.Value:F2} km";
+            string lastRunText = $"最近一次跑步：{lastRun.Key.ToShortDateString()}, {lastRun.Value:F2} 公里";
             var lastRunTextWidth = lastRunPaint.MeasureText(lastRunText);
             canvas.DrawText(lastRunText, FixedWidth - lastRunTextWidth - 20, YearLabelHeight + StatsLabelHeight, lastRunPaint);
         }
