@@ -202,7 +202,7 @@ public partial class MainWindow : Window
         string daysUnit = " 天";
         string distanceLabel = "总里程:";
         string distanceValue = $"{totalDistance:F2}";
-        string distanceUnit = " km";
+        string distanceUnit = " 公里";
 
         float labelWidth = Math.Max(statsPaint.MeasureText(daysLabel), statsPaint.MeasureText(distanceLabel));
         float valueWidth = Math.Max(statsPaint.MeasureText(daysValue), statsPaint.MeasureText(distanceValue));
