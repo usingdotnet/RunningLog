@@ -435,31 +435,30 @@ public partial class MainWindow : Window
             return;
         }
 
-        BackupFiles(selectedDate.Year);
         UpdateDataAndSave(selectedDate, distance);
         ShowMessage("添加完成。", MessageType.Success);
     }
 
-    private void BtnRevert_OnClick(object sender, RoutedEventArgs e)
+    private async void BtnRevert_OnClick(object sender, RoutedEventArgs e)
     {
-        string csvFile = Path.Combine(_dataDir, $"{_year}.csv");
-        string pngFile = Path.Combine(_dataDir, $"{_year}.png");
-        string csvBackup = Path.Combine(_dataDir, $"{_year}.csv.bak");
-        string pngBackup = Path.Combine(_dataDir, $"{_year}.png.bak");
-
-        if (File.Exists(csvBackup) && File.Exists(pngBackup))
+        try
         {
-            File.Copy(csvBackup, csvFile, true);
-            File.Copy(pngBackup, pngFile, true);
-            File.Delete(csvBackup); // 删除CSV备份文件
-            File.Delete(pngBackup); // 删除PNG备份文件
-            LoadData();
-            skElement.InvalidateVisual();
-            ShowMessage("已成功撤销最近的修改。", MessageType.Success);
+            var status = await GetGitStatus();
+            if (!string.IsNullOrEmpty(status))
+            {
+                await ExecuteGitCommand("reset --hard HEAD");
+                SlideMessage.ShowMessage("成功撤销所有修改", MessageType.Success);
+                LoadData();
+                skElement.InvalidateVisual();
+            }
+            else
+            {
+                SlideMessage.ShowMessage("没有需要撤销的修改", MessageType.Warning);
+            }
         }
-        else
+        catch (Exception ex)
         {
-            ShowMessage("没有可用的备份文件。", MessageType.Warning);
+            MessageBox.Show($"重置操作失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -480,17 +479,6 @@ public partial class MainWindow : Window
         {
             ShowMessage("没有可发布的跑步记录。", MessageType.Error);
         }
-    }
-
-    private void BackupFiles(int year)
-    {
-        string csvFile = Path.Combine(_dataDir, $"{year}.csv");
-        string pngFile = Path.Combine(_dataDir, $"{year}.png");
-        string csvBackup = Path.Combine(_dataDir, $"{year}.csv.bak");
-        string pngBackup = Path.Combine(_dataDir, $"{year}.png.bak");
-
-        if (File.Exists(csvFile)) File.Copy(csvFile, csvBackup, true);
-        if (File.Exists(pngFile)) File.Copy(pngFile, pngBackup, true);
     }
 
     private bool ValidateInput(out DateTime selectedDate, out double distance)
