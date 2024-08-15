@@ -1,17 +1,12 @@
 ﻿using SkiaSharp;
 using SkiaSharp.Views.Desktop;
-using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using NLog;
 using CliWrap;
 using Tomlet;
-using Tomlet.Models;
-using System.Xml.Serialization;
 using CliWrap.Buffered;
 
 namespace RunningLog;
@@ -75,7 +70,14 @@ public partial class MainWindow : Window
         LoadData();
         InitializeTodayDistance();
         UpdateYearButtonsVisibility();
-        BtnPublish.Visibility = IsGitRepository() ? Visibility.Visible : Visibility.Collapsed;
+        SetGitRelatedButtonsVisibility();
+    }
+
+    private void SetGitRelatedButtonsVisibility()
+    {
+        var visibility = IsGitRepository() ? Visibility.Visible : Visibility.Collapsed;
+        BtnRevert.Visibility = visibility;
+        BtnPublish.Visibility = visibility;
     }
 
     private void MainWindow_OnLoaded(object sender, RoutedEventArgs e)
@@ -124,8 +126,8 @@ public partial class MainWindow : Window
         DrawBackground(canvas);
         DrawHeader(canvas);
         DrawHeatmap(canvas);
-        DrawStats(canvas);  // 新增：绘制左下角的统计信息
-        DrawLegend(canvas); // 添加这一行
+        DrawStats(canvas);
+        DrawLegend(canvas);
         SavePng(e.Surface);
     }
 
@@ -152,9 +154,9 @@ public partial class MainWindow : Window
         {
             IsAntialias = true,
             Style = SKPaintStyle.Fill,
-            TextSize = 14,
+            TextSize = 16,
             Typeface = SKTypeface.FromFamilyName("Microsoft YaHei"),
-            Color = textColor
+            Color = textColor,
         };
 
         string yearText = $"{_year}";
@@ -163,11 +165,11 @@ public partial class MainWindow : Window
 
         canvas.DrawText(yearText, centerX, YearLabelHeight, yearPaint);
 
-        // 绘制最后一次跑步信息
+        // 绘制最近一次跑步信息
         var lastRun = _data.OrderByDescending(x => x.Key).FirstOrDefault();
         if (lastRun.Key != default)
         {
-            string lastRunText = $"最近一次跑步：{lastRun.Key.ToShortDateString()}, {lastRun.Value:F2} 公里";
+            string lastRunText = $"最近一次跑步：{lastRun.Key.ToShortDateString()}，{lastRun.Value:F2} 公里";
             var lastRunTextWidth = lastRunPaint.MeasureText(lastRunText);
             canvas.DrawText(lastRunText, FixedWidth - lastRunTextWidth - 20, YearLabelHeight + StatsLabelHeight, lastRunPaint);
         }
@@ -189,7 +191,7 @@ public partial class MainWindow : Window
         {
             IsAntialias = true,
             Style = SKPaintStyle.Fill,
-            TextSize = 14,
+            TextSize = 16,
             Typeface = SKTypeface.FromFamilyName("Microsoft YaHei"),
             Color = textColor
         };
@@ -260,9 +262,9 @@ public partial class MainWindow : Window
         float textOffsetX = 5;
 
         // 绘制图例文字
-        canvas.DrawText("0km", legendX + CellSize / 2 - textPaint.MeasureText("0km") / 2 - 2 * CellSize, legendY + CellSize / 2 + textOffsetY, textPaint);
-        canvas.DrawText("5km", legendX + 6 * CellSize - textPaint.MeasureText("5km") / 2 + 4, legendY + CellSize + textOffsetY + textOffsetX, textPaint);
-        canvas.DrawText("10km", legendX + 11 * CellSize + textOffsetX, legendY + CellSize / 2 + textOffsetY, textPaint);
+        canvas.DrawText("0 km", legendX + CellSize / 2 - textPaint.MeasureText("0km") / 2 - 2 * CellSize, legendY + CellSize / 2 + textOffsetY, textPaint);
+        canvas.DrawText("5 km", legendX + 6 * CellSize - textPaint.MeasureText("5km") / 2 + 4, legendY + CellSize + textOffsetY + textOffsetX, textPaint);
+        canvas.DrawText("10 km", legendX + 11 * CellSize + textOffsetX, legendY + CellSize / 2 + textOffsetY, textPaint);
     }
 
     private void DrawHeatmap(SKCanvas canvas)
@@ -473,7 +475,8 @@ public partial class MainWindow : Window
         var lastRun = _data.OrderByDescending(x => x.Key).FirstOrDefault();
         if (lastRun.Key != default)
         {
-            await CommitAndPush($"跑步 {lastRun.Value:F2} 公里");
+            string date = lastRun.Key.Date.ToShortDateString();
+            await CommitAndPush($"{date} 跑步 {lastRun.Value:F2} 公里");
         }
         else
         {
