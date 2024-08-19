@@ -8,6 +8,7 @@ using NLog;
 using CliWrap;
 using Tomlet;
 using CliWrap.Buffered;
+using System.Diagnostics;
 
 namespace RunningLog;
 
@@ -572,5 +573,17 @@ public partial class MainWindow : Window
     private void About_Click(object sender, RoutedEventArgs e)
     {
 
+    }
+
+    private void BtnOpen_OnClick(object sender, RoutedEventArgs e)
+    {
+        if (Directory.Exists(_dataDir))
+        {
+            Process.Start("explorer.exe", _dataDir);
+        }
+        else
+        {
+            ShowMessage("数据目录不存在", MessageType.Error);
+        }
     }
 }
