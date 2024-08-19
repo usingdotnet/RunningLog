@@ -126,7 +126,7 @@ public partial class MainWindow : Window
         DrawBackground(canvas);
         DrawHeader(canvas);
         DrawHeatmap(canvas);
-        DrawStats(canvas);
+        DrawLastRunInfo(canvas);
         DrawLegend(canvas);
         SavePng(e.Surface);
     }
@@ -150,7 +150,7 @@ public partial class MainWindow : Window
             Color = textColor
         };
 
-        var lastRunPaint = new SKPaint
+        var statsPaint = new SKPaint
         {
             IsAntialias = true,
             Style = SKPaintStyle.Fill,
@@ -160,19 +160,14 @@ public partial class MainWindow : Window
         };
 
         string yearText = $"{_year}";
-        var yearTextWidth = yearPaint.MeasureText(yearText);
-        var centerX = (FixedWidth - yearTextWidth) / 2;
+        canvas.DrawText(yearText, DayLabelWidth, YearLabelHeight, yearPaint);
 
-        canvas.DrawText(yearText, centerX, YearLabelHeight, yearPaint);
-
-        // 绘制最近一次跑步信息
-        var lastRun = _data.OrderByDescending(x => x.Key).FirstOrDefault();
-        if (lastRun.Key != default)
-        {
-            string lastRunText = $"最近一次跑步：{lastRun.Key.ToShortDateString()}，{lastRun.Value:F2} 公里";
-            var lastRunTextWidth = lastRunPaint.MeasureText(lastRunText);
-            canvas.DrawText(lastRunText, FixedWidth - lastRunTextWidth - 20, YearLabelHeight + StatsLabelHeight, lastRunPaint);
-        }
+        // 绘制统计信息
+        int runningDays = _data.Count(entry => entry.Value > 0);
+        double totalDistance = _data.Values.Sum();
+        string statsText = $"{runningDays} 天，{totalDistance:F2} 公里";
+        var statsTextWidth = statsPaint.MeasureText(statsText);
+        canvas.DrawText(statsText, FixedWidth - statsTextWidth - 20, YearLabelHeight + StatsLabelHeight, statsPaint);
     }
 
     private float CalculateHeatmapBottom()
@@ -183,51 +178,27 @@ public partial class MainWindow : Window
         return HeaderHeight + LabelHeight + totalRows * (CellSize + CellPadding) + CellPadding;
     }
 
-    private void DrawStats(SKCanvas canvas)
+    private void DrawLastRunInfo(SKCanvas canvas)
     {
         var textColor = _isDarkMode ? SKColors.White : new SKColor(34, 34, 34);
 
-        var statsPaint = new SKPaint
+        var lastRunPaint = new SKPaint
         {
             IsAntialias = true,
             Style = SKPaintStyle.Fill,
             TextSize = 16,
             Typeface = SKTypeface.FromFamilyName("Microsoft YaHei"),
-            Color = textColor
+            Color = textColor,
         };
 
-        int runningDays = _data.Count(entry => entry.Value > 0);
-        double totalDistance = _data.Values.Sum();
-
-        string daysLabel = "跑步天数:";
-        string daysValue = $"{runningDays}";
-        string daysUnit = " 天";
-        string distanceLabel = "总里程:";
-        string distanceValue = $"{totalDistance:F2}";
-        string distanceUnit = " 公里";
-
-        float labelWidth = Math.Max(statsPaint.MeasureText(daysLabel), statsPaint.MeasureText(distanceLabel));
-        float valueWidth = Math.Max(statsPaint.MeasureText(daysValue), statsPaint.MeasureText(distanceValue));
-        float unitWidth = Math.Max(statsPaint.MeasureText(daysUnit), statsPaint.MeasureText(distanceUnit));
-
-        // 计算热力图底部位置
-        float heatmapBottom = CalculateHeatmapBottom();
-
-        // 设置统计信息的垂直位置
-        float statsY1 = heatmapBottom + 20; // 第一行文本的Y坐标
-        float statsY2 = statsY1 + 20; // 第二行文本的Y坐标
-
-        float labelX = 30;
-        float valueX = labelX + labelWidth + 10; // 10是标签和值之间的间距
-        float unitX = valueX + valueWidth + 5; // 5是值和单位之间的间距
-
-        canvas.DrawText(daysLabel, labelX, statsY1, statsPaint);
-        canvas.DrawText(daysValue, unitX - statsPaint.MeasureText(daysValue), statsY1, statsPaint);
-        canvas.DrawText(daysUnit, unitX, statsY1, statsPaint);
-
-        canvas.DrawText(distanceLabel, labelX, statsY2, statsPaint);
-        canvas.DrawText(distanceValue, unitX - statsPaint.MeasureText(distanceValue), statsY2, statsPaint);
-        canvas.DrawText(distanceUnit, unitX, statsY2, statsPaint);
+        var lastRun = _data.OrderByDescending(x => x.Key).FirstOrDefault();
+        if (lastRun.Key != default)
+        {
+            string lastRunText = $"最近一次跑步：{lastRun.Key.ToShortDateString()}，{lastRun.Value:F2} 公里";
+            var lastRunTextWidth = lastRunPaint.MeasureText(lastRunText);
+            float heatmapBottom = CalculateHeatmapBottom();
+            canvas.DrawText(lastRunText, DayLabelWidth, heatmapBottom + 20, lastRunPaint);
+        }
     }
 
     private void DrawLegend(SKCanvas canvas)
@@ -355,7 +326,7 @@ public partial class MainWindow : Window
             if (csvLastModified <= pngLastModified)
             {
                 // CSV文件未修改或PNG文件比CSV文件新,无需重新生成PNG
-                return;
+                //return;
             }
         }
 
