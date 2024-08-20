@@ -346,25 +346,17 @@ public partial class MainWindow : Window
             return _isDarkMode ? new SKColor(68, 68, 68) : SKColors.LightGray;
         }
 
-        double minDistance = 1.0;
-        double maxDistance = 10.0;
+        distance = Math.Clamp(distance, 1.0, 10.0);
+        double normalizedDistance = Math.Pow((distance - 1.0) / 9.0, 0.9);
 
-        // 将距离限制在 1-10km 范围内
-        distance = Math.Max(minDistance, Math.Min(maxDistance, distance));
-
-        // 使用更强的非线性函数计算归一化的距离值 (0.0 - 1.0)
-        double normalizedDistance = Math.Pow((distance - minDistance) / (maxDistance - minDistance), 0.9);
-
-        // 定义起始颜色（黄色）和结束颜色（红色）
         SKColor startColor = new SKColor(255, 255, 0);  // 黄色
         SKColor endColor = new SKColor(255, 0, 0);      // 红色
 
-        // 使用插值计算中间颜色
-        byte r = (byte)(startColor.Red + (endColor.Red - startColor.Red) * normalizedDistance);
-        byte g = (byte)(startColor.Green + (endColor.Green - startColor.Green) * normalizedDistance);
-        byte b = (byte)(startColor.Blue + (endColor.Blue - startColor.Blue) * normalizedDistance);
-
-        return new SKColor(r, g, b);
+        return new SKColor(
+            (byte)(startColor.Red + (endColor.Red - startColor.Red) * normalizedDistance),
+            (byte)(startColor.Green + (endColor.Green - startColor.Green) * normalizedDistance),
+            (byte)(startColor.Blue + (endColor.Blue - startColor.Blue) * normalizedDistance)
+        );
     }
 
     private static ChineseDayOfWeek GetChineseDayOfWeek(DayOfWeek dayOfWeek)
