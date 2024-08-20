@@ -30,11 +30,10 @@ public partial class MainWindow : Window
     private const int CellPadding = 2;
     private const int FixedWidth = 790;
     private const int LabelHeight = 30;
-    private const int DayLabelWidth = 30;
+    private const int LeftMargin = 30;
     private const int MonthLabelHeight = 20;
-    private const int YearLabelHeight = 40;
-    private const int StatsLabelHeight = 30;
-    private const int HeaderHeight = YearLabelHeight + StatsLabelHeight + 20;
+    private const int YearLabelHeight = 30;
+    private const int HeaderHeight = YearLabelHeight + 10;
     private AppConfig _config;
     private const string ConfigFile = "config.toml";
 
@@ -161,14 +160,14 @@ public partial class MainWindow : Window
         };
 
         string yearText = $"{_year}";
-        canvas.DrawText(yearText, DayLabelWidth, YearLabelHeight, yearPaint);
+        canvas.DrawText(yearText, LeftMargin, YearLabelHeight - 5, yearPaint);
 
         // 绘制统计信息
         int runningDays = _data.Count(entry => entry.Value > 0);
         double totalDistance = _data.Values.Sum();
-        string statsText = $"{runningDays} 天，{totalDistance:F2} 公里";
+        string statsText = $"{runningDays} days, {totalDistance:F2} km";
         var statsTextWidth = statsPaint.MeasureText(statsText);
-        canvas.DrawText(statsText, FixedWidth - statsTextWidth - 20, YearLabelHeight + StatsLabelHeight, statsPaint);
+        canvas.DrawText(statsText, FixedWidth - statsTextWidth - 20, YearLabelHeight - 5, statsPaint);
     }
 
     private float CalculateHeatmapBottom()
@@ -195,10 +194,10 @@ public partial class MainWindow : Window
         var lastRun = _data.OrderByDescending(x => x.Key).FirstOrDefault();
         if (lastRun.Key != default)
         {
-            string lastRunText = $"最近一次跑步：{lastRun.Key.ToShortDateString()}，{lastRun.Value:F2} 公里";
+            string lastRunText = $"Latest：{lastRun.Key.ToShortDateString()}, {lastRun.Value:F2} km";
             var lastRunTextWidth = lastRunPaint.MeasureText(lastRunText);
             float heatmapBottom = CalculateHeatmapBottom();
-            canvas.DrawText(lastRunText, DayLabelWidth, heatmapBottom + 20, lastRunPaint);
+            canvas.DrawText(lastRunText, LeftMargin, heatmapBottom + 30, lastRunPaint);
         }
     }
 
@@ -247,38 +246,33 @@ public partial class MainWindow : Window
         {
             IsAntialias = true,
             Style = SKPaintStyle.Fill,
-            TextSize = 14,
             Typeface = SKTypeface.FromFamilyName("Microsoft YaHei"),
             Color = textColor
         };
 
-        DrawDayLabels(canvas, labelPaint);
         DrawMonthLabels(canvas, labelPaint);
         DrawHeatmapCells(canvas, labelPaint);
-    }
-
-    private void DrawDayLabels(SKCanvas canvas, SKPaint labelPaint)
-    {
-        var daysOfWeek = new[] { "一", "三", "五" };
-        int labelVerticalOffset = (CellSize + CellPadding) / 2 + 3;
-        for (int i = 0; i < daysOfWeek.Length; i++)
-        {
-            int row = Array.IndexOf(new[] { "一", "二", "三", "四", "五", "六", "日" }, daysOfWeek[i]);
-            canvas.DrawText(daysOfWeek[i], CellPadding / 2, HeaderHeight + LabelHeight + row * (CellSize + CellPadding) + labelVerticalOffset, labelPaint);
-        }
     }
 
     private void DrawMonthLabels(SKCanvas canvas, SKPaint labelPaint)
     {
         var startDate = new DateTime(_year, 1, 1);
+        string[] monthAbbreviations = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+
+        // 减小字体大小
+        labelPaint.TextSize = 12;
+
         for (int month = 1; month <= 12; month++)
         {
             var monthStart = new DateTime(_year, month, 1);
             int daysBeforeMonth = (monthStart - startDate).Days;
-            int monthStartCol = (daysBeforeMonth + (int)GetChineseDayOfWeek(startDate.DayOfWeek)) / 7;
-            int monthOffsetX = monthStartCol * (CellSize + CellPadding) + DayLabelWidth;
+            int monthStartCol = daysBeforeMonth / 7;
+            int monthOffsetX = monthStartCol * (CellSize + CellPadding) + LeftMargin;
 
-            canvas.DrawText($"{month}月", monthOffsetX, HeaderHeight + MonthLabelHeight / 2, labelPaint);
+            // 调整Y坐标,使标签更靠近热力图
+            float yPosition = HeaderHeight + MonthLabelHeight + 5;
+
+            canvas.DrawText(monthAbbreviations[month - 1], monthOffsetX, yPosition, labelPaint);
         }
     }
 
@@ -303,9 +297,9 @@ public partial class MainWindow : Window
                 labelPaint.Color = color;
 
                 var rect = new SKRect(
-                    col * (CellSize + CellPadding) + DayLabelWidth,
+                    col * (CellSize + CellPadding) + LeftMargin,
                     row * (CellSize + CellPadding) + HeaderHeight + LabelHeight,
-                    col * (CellSize + CellPadding) + CellSize + DayLabelWidth,
+                    col * (CellSize + CellPadding) + CellSize + LeftMargin,
                     row * (CellSize + CellPadding) + CellSize + HeaderHeight + LabelHeight
                 );
 
