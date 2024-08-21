@@ -430,16 +430,65 @@ public partial class MainWindow : Window
             return;
         }
 
-        var lastRun = _data.OrderByDescending(x => x.Key).FirstOrDefault();
-        if (lastRun.Key != default)
+        try
         {
-            string date = lastRun.Key.Date.ToShortDateString();
-            await CommitAndPush($"{date} 跑步 {lastRun.Value:F2} 公里");
+            // 检查是否有未提交的更改
+            string status = await GetGitStatus();
+            bool hasChanges = !string.IsNullOrWhiteSpace(status);
+
+            // 检查是否有未推送的提交
+            string unpushedCommits = await GetUnpushedCommits();
+            bool hasUnpushedCommits = !string.IsNullOrWhiteSpace(unpushedCommits);
+
+            if (!hasChanges && !hasUnpushedCommits)
+            {
+                ShowMessage("没有需要发布的更改或未推送的提交。", MessageType.Warning);
+                return;
+            }
+
+            if (hasChanges)
+            {
+                var lastRun = _data.OrderByDescending(x => x.Key).FirstOrDefault();
+                if (lastRun.Key != default)
+                {
+                    string date = lastRun.Key.Date.ToShortDateString();
+                    await CommitChanges($"{date} 跑步 {lastRun.Value:F2} 公里");
+                }
+                else
+                {
+                    ShowMessage("没有可发布的跑步记录。", MessageType.Error);
+                    return;
+                }
+            }
+
+            // 推送所有提交
+            await PushChanges();
+            ShowMessage("成功发布更改。", MessageType.Success);
         }
-        else
+        catch (Exception ex)
         {
-            ShowMessage("没有可发布的跑步记录。", MessageType.Error);
+            ShowMessage($"发布过程中出错: {ex.Message}", MessageType.Error);
         }
+    }
+
+    private async Task<string> GetUnpushedCommits()
+    {
+        var result = await Cli.Wrap("git")
+            .WithArguments("log @{u}..HEAD --oneline")
+            .WithWorkingDirectory(_dataDir)
+            .ExecuteBufferedAsync();
+
+        return result.StandardOutput.Trim();
+    }
+
+    private async Task CommitChanges(string message)
+    {
+        await ExecuteGitCommand($"commit -a -m \"{message}\"");
+    }
+
+    private async Task PushChanges()
+    {
+        await ExecuteGitCommand("push");
     }
 
     private bool ValidateInput(out DateTime selectedDate, out double distance)
@@ -485,28 +534,6 @@ public partial class MainWindow : Window
         var csvLines = sortedData.Select(entry => $"{entry.Key:yyyy-MM-dd},{entry.Value:F2}");
         var file = Path.Combine(_dataDir, $"{_year}.csv");
         File.WriteAllLines(file, csvLines);
-    }
-
-    private async Task CommitAndPush(string commitMessage)
-    {
-        try
-        {
-            // 检查仓库状态
-            string status = await GetGitStatus();
-            if (string.IsNullOrWhiteSpace(status))
-            {
-                ShowMessage("没有需要提交的更改。", MessageType.Warning);
-                return;
-            }
-
-            await ExecuteGitCommand($"commit -a -m \"{commitMessage}\"");
-            await ExecuteGitCommand("push");
-            ShowMessage("已成功发布最新的跑步记录。", MessageType.Success);
-        }
-        catch (Exception ex)
-        {
-            ShowMessage($"发生错误: {ex.Message}", MessageType.Error);
-        }
     }
 
     private async Task<string> GetGitStatus()
