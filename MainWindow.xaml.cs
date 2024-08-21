@@ -9,6 +9,7 @@ using CliWrap;
 using Tomlet;
 using CliWrap.Buffered;
 using System.Diagnostics;
+using System.Reflection;
 
 namespace RunningLog;
 
@@ -22,6 +23,7 @@ public partial class MainWindow : Window
     private int _year = DateTime.Now.Year;
     private Dictionary<DateTime, double> _data = [];
     private string _dataDir = "";
+    private string _repoDir = "";
     private readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private bool _isDarkMode = true;
     private readonly DateTime _today = DateTime.Now.Date;
@@ -35,12 +37,16 @@ public partial class MainWindow : Window
     private const int YearLabelHeight = 30;
     private const int HeaderHeight = YearLabelHeight + 10;
     private AppConfig _config;
-    private const string ConfigFile = "config.toml";
+    private string ConfigFile = "config.toml";
 
     private void LoadConfig()
     {
+        string exePath = Assembly.GetExecutingAssembly().Location;
+        string exeDirectory = Path.GetDirectoryName(exePath);
+        ConfigFile = Path.Combine(exeDirectory, ConfigFile);
         if (File.Exists(ConfigFile))
         {
+            _logger.Debug($"配置文件 {ConfigFile}");
             string tomlString = File.ReadAllText(ConfigFile);
             _config = TomletMain.To<AppConfig>(tomlString);
         }
@@ -51,13 +57,13 @@ public partial class MainWindow : Window
         }
 
         _isDarkMode = _config.IsDarkMode;
-        _dataDir = _config.DataDir;
+        _repoDir = _config.RepoDir;
+        _dataDir = Path.Combine(_repoDir,"data");
     }
 
     private void SaveConfig()
     {
         _config.IsDarkMode = _isDarkMode;
-        _config.DataDir = _dataDir;
         string tomlString = TomletMain.TomlStringFrom(_config);
         File.WriteAllText(ConfigFile, tomlString);
     }
@@ -310,8 +316,8 @@ public partial class MainWindow : Window
 
     private void SavePng(SKSurface surface)
     {
-        string csvFilePath = Path.Combine(_config.DataDir, $"{_year}.csv");
-        string pngFilePath = Path.Combine(_config.DataDir, $"{_year}.png");
+        string csvFilePath = Path.Combine(_dataDir, $"{_year}.csv");
+        string pngFilePath = Path.Combine(_dataDir, $"{_year}.png");
 
         if (File.Exists(csvFilePath) && File.Exists(pngFilePath))
         {
@@ -475,7 +481,7 @@ public partial class MainWindow : Window
     {
         var result = await Cli.Wrap("git")
             .WithArguments("log @{u}..HEAD --oneline")
-            .WithWorkingDirectory(_dataDir)
+            .WithWorkingDirectory(_repoDir)
             .ExecuteBufferedAsync();
 
         return result.StandardOutput.Trim();
@@ -540,7 +546,7 @@ public partial class MainWindow : Window
     {
         var result = await Cli.Wrap("git")
             .WithArguments("status --porcelain")
-            .WithWorkingDirectory(_dataDir)
+            .WithWorkingDirectory(_repoDir)
             .ExecuteBufferedAsync();
 
         return result.StandardOutput.Trim();
@@ -550,7 +556,7 @@ public partial class MainWindow : Window
     {
         await Cli.Wrap("git")
             .WithArguments(arguments)
-            .WithWorkingDirectory(_dataDir)
+            .WithWorkingDirectory(_repoDir)
             .WithStandardOutputPipe(PipeTarget.ToDelegate(s => _logger.Debug(s)))
             .WithStandardErrorPipe(PipeTarget.ToDelegate(s => _logger.Debug(s)))
             .ExecuteAsync();
@@ -558,7 +564,7 @@ public partial class MainWindow : Window
 
     private bool IsGitRepository()
     {
-        return Directory.Exists(Path.Combine(_dataDir, ".git"));
+        return Directory.Exists(Path.Combine(_repoDir, ".git"));
     }
 
     private void ShowMessage(string message, MessageType type)
