@@ -86,7 +86,7 @@
                 <DatePicker DisplayDate="" CalendarStyle="{StaticResource styleCalendar}" SelectedDate="{x:Static sys:DateTime.Now}" 
                         VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Name="DpDate" Margin="5"/>
                 <Label Content="距离：" VerticalAlignment="Center" Margin="5"/>
-                <TextBox Name="TxtDistance" Width="60" Text="5" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
+                <TextBox Name="TxtDistance" Width="60" Text="" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
                 <Label Content="公里" VerticalAlignment="Center" Margin="5"/>
                 <Button Name="BtnOk" Content="添加" Margin="30,5,5,5" Width="60" Click="BtnOk_OnClick"/>
                 <Button Name="BtnRevert" Content="撤销" Margin="30,5,5,5" Width="60" Click="BtnRevert_OnClick"/>

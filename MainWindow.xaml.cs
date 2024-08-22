@@ -103,10 +103,11 @@ public partial class MainWindow : Window
 
     private void InitializeTodayDistance()
     {
-        if (_data.TryGetValue(_today, out List<double> distances))
-        {
-            TxtDistance.Text = distances.Sum().ToString("F2");
-        }
+        // 移除加载当天跑步距离的代码
+        // if (_data.TryGetValue(_today, out List<double> distances))
+        // {
+        //     TxtDistance.Text = distances.Sum().ToString("F2");
+        // }
     }
 
     private void LoadData()
@@ -404,6 +405,9 @@ public partial class MainWindow : Window
 
         UpdateDataAndSave(selectedDate, distance);
         ShowMessage("添加完成。", MessageType.Success);
+        
+        // 添加成功后清空 TxtDistance
+        TxtDistance.Text = string.Empty;
     }
 
     private async void BtnRevert_OnClick(object sender, RoutedEventArgs e)
