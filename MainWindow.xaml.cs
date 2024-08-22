@@ -21,7 +21,7 @@ public enum ChineseDayOfWeek
 public partial class MainWindow : Window
 {
     private int _year = DateTime.Now.Year;
-    private Dictionary<DateTime, double> _data = [];
+    private Dictionary<DateTime, List<double>> _data = new Dictionary<DateTime, List<double>>();
     private string _dataDir = "";
     private string _repoDir = "";
     private readonly Logger _logger = LogManager.GetCurrentClassLogger();
@@ -103,26 +103,27 @@ public partial class MainWindow : Window
 
     private void InitializeTodayDistance()
     {
-        if (_data.TryGetValue(_today, out double dis))
+        if (_data.TryGetValue(_today, out List<double> distances))
         {
-            TxtDistance.Text = dis.ToString("F2");
+            TxtDistance.Text = distances.Sum().ToString("F2");
         }
     }
 
     private void LoadData()
     {
         var filePath = Path.Combine(_dataDir, $"{_year}.csv");
-        _data = File.Exists(filePath) ? LoadDataFromCsv(filePath) : [];
+        _data = File.Exists(filePath) ? LoadDataFromCsv(filePath) : new Dictionary<DateTime, List<double>>();
     }
 
-    private static Dictionary<DateTime, double> LoadDataFromCsv(string filePath)
+    private static Dictionary<DateTime, List<double>> LoadDataFromCsv(string filePath)
     {
         return File.ReadLines(filePath)
             .Select(line => line.Split(','))
             .Where(fields => fields.Length >= 2)
+            .GroupBy(fields => DateTime.Parse(fields[0]))
             .ToDictionary(
-                fields => DateTime.Parse(fields[0]),
-                fields => double.Parse(fields[1], NumberStyles.Float, CultureInfo.InvariantCulture)
+                group => group.Key,
+                group => group.Select(fields => double.Parse(fields[1], NumberStyles.Float, CultureInfo.InvariantCulture)).ToList()
             );
     }
 
@@ -169,8 +170,8 @@ public partial class MainWindow : Window
         canvas.DrawText(yearText, LeftMargin, YearLabelHeight - 5, yearPaint);
 
         // 绘制统计信息
-        int runningDays = _data.Count(entry => entry.Value > 0);
-        double totalDistance = _data.Values.Sum();
+        int runningDays = _data.Count(entry => entry.Value.Sum() > 0);
+        double totalDistance = _data.Values.SelectMany(distances => distances).Sum();
         string statsText = $"{runningDays} days, {totalDistance:F2} km";
         var statsTextWidth = statsPaint.MeasureText(statsText);
         canvas.DrawText(statsText, FixedWidth - statsTextWidth - 20, YearLabelHeight - 5, statsPaint);
@@ -200,7 +201,7 @@ public partial class MainWindow : Window
         var lastRun = _data.OrderByDescending(x => x.Key).FirstOrDefault();
         if (lastRun.Key != default)
         {
-            string lastRunText = $"Latest：{lastRun.Key.ToShortDateString()}, {lastRun.Value:F2} km";
+            string lastRunText = $"Latest：{lastRun.Key.ToShortDateString()}, {lastRun.Value.Sum():F2} km";
             var lastRunTextWidth = lastRunPaint.MeasureText(lastRunText);
             float heatmapBottom = CalculateHeatmapBottom();
             canvas.DrawText(lastRunText, LeftMargin, heatmapBottom + 30, lastRunPaint);
@@ -296,9 +297,9 @@ public partial class MainWindow : Window
                 if (index < 0 || index >= totalDays) continue;
 
                 var date = startDate.AddDays(index);
-                double v = _data.TryGetValue(date, out double value) ? value : 0;
+                double totalDistance = _data.TryGetValue(date, out List<double> distances) ? distances.Sum() : 0;
 
-                SKColor color = GetDayColor(v);
+                SKColor color = GetDayColor(totalDistance);
 
                 labelPaint.Color = color;
 
@@ -458,7 +459,7 @@ public partial class MainWindow : Window
                 if (lastRun.Key != default)
                 {
                     string date = lastRun.Key.Date.ToShortDateString();
-                    await CommitChanges($"{date} 跑步 {lastRun.Value:F2} 公里");
+                    await CommitChanges($"{date} 跑步 {lastRun.Value.Sum():F2} 公里");
                 }
                 else
                 {
@@ -516,7 +517,11 @@ public partial class MainWindow : Window
         }
 
         LogDistanceChange(selectedDate, distance);
-        _data[selectedDate] = distance;
+        if (!_data.ContainsKey(selectedDate))
+        {
+            _data[selectedDate] = new List<double>();
+        }
+        _data[selectedDate].Add(distance);
         SaveDataToCsv();
         skElement.InvalidateVisual();
     }
@@ -524,9 +529,9 @@ public partial class MainWindow : Window
     private void LogDistanceChange(DateTime selectedDate, double distance)
     {
         var d = selectedDate.ToString("yyyy-MM-dd");
-        if (_data.TryGetValue(selectedDate, out double value))
+        if (_data.TryGetValue(selectedDate, out List<double> values))
         {
-            _logger.Debug($"日期 {d} 的距离由 {value} 修改为 {distance}");
+            _logger.Debug($"日期 {d} 的距离由 {string.Join(", ", values)} 添加了 {distance}");
         }
         else
         {
@@ -537,7 +542,7 @@ public partial class MainWindow : Window
     private void SaveDataToCsv()
     {
         var sortedData = _data.OrderBy(entry => entry.Key).ToList();
-        var csvLines = sortedData.Select(entry => $"{entry.Key:yyyy-MM-dd},{entry.Value:F2}");
+        var csvLines = sortedData.SelectMany(entry => entry.Value.Select(value => $"{entry.Key:yyyy-MM-dd},{value:F2}"));
         var file = Path.Combine(_dataDir, $"{_year}.csv");
         File.WriteAllLines(file, csvLines);
     }
