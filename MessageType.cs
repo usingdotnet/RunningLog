@@ -1,6 +1,6 @@
 ﻿namespace RunningLog;
 
-public enum MessageType 
+public enum MessageType
 {
     Success,
     Warning,
