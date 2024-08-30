@@ -10,6 +10,8 @@ using Tomlet;
 using CliWrap.Buffered;
 using System.Diagnostics;
 using System.Reflection;
+using ScottPlot;
+using ScottPlot.Plottables;
 
 namespace RunningLog;
 
@@ -134,6 +136,10 @@ public partial class MainWindow : Window
         DrawHeatmap(canvas);
         DrawLastRunInfo(canvas);
         DrawLegend(canvas);
+        
+        // 绘制每月跑量图表
+        var monthlyDistances = GetMonthlyDistances();
+        DrawMonthlyDistancePlot(monthlyDistances);
         SavePng(e.Surface);
     }
 
@@ -667,5 +673,63 @@ public partial class MainWindow : Window
         {
             ShowMessage("数据目录不存在", MessageType.Error);
         }
+    }
+
+    private double[] GetMonthlyDistances()
+    {
+        double[] monthlyDistances = new double[12];
+        foreach (var entry in _data)
+        {
+            int month = entry.Key.Month - 1; // 0-based index
+            monthlyDistances[month] += entry.Value.Sum(r => r.Distance);
+        }
+        return monthlyDistances;
+    }
+
+    private void DrawMonthlyDistancePlot(double[] monthlyDistances)
+    {
+        WpfPlot1.Plot.Clear();
+        var plt = WpfPlot1.Plot;
+        List<Bar> bars = new List<Bar>();
+        foreach (var v in monthlyDistances.Index())
+        {
+            var bar = new Bar() { Position = v.Index+1, Value = v.Item, Error = 0, FillColor = Colors.Orange };
+            double v1 = Math.Round(bar.Value, 2);
+            bar.Label = v1.ToString();
+            bars.Add(bar);
+        }
+
+        var bp = plt.Add.Bars(bars);
+        bp.ValueLabelStyle.Bold = false;
+        bp.ValueLabelStyle.FontSize = 13;
+        //bp.ValueLabelStyle.OffsetY = 26;
+        bp.ValueLabelStyle.AntiAliasBackground =true;
+        bp.ValueLabelStyle.AntiAliasText =true;
+        plt.Title("Monthly Running Distance", 15);
+        plt.YLabel("Distance (km)",15);
+
+        Tick[] ticks =
+        {
+            new(1, "Jan"),
+            new(2, "Feb"),
+            new(3, "Mar"),
+            new(4, "Apr"),
+            new(5, "May"),
+            new(6, "Jun"),
+            new(7, "Jul"),
+            new(8, "Aug"),
+            new(9, "Sep"),
+            new(10, "Oct"),
+            new(11, "Nov"),
+            new(12, "Dec"),
+        };
+
+        plt.Axes.Bottom.TickGenerator = new ScottPlot.TickGenerators.NumericManual(ticks);
+        plt.Axes.Bottom.MajorTickStyle.Length = 0;
+
+        plt.Axes.Margins(bottom: 0);
+        WpfPlot1.Plot.Font.Automatic();
+        WpfPlot1.Plot.Axes.AutoScale();
+        WpfPlot1.Refresh();
     }
 }
