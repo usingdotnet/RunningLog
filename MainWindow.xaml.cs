@@ -702,7 +702,7 @@ public partial class MainWindow : Window
         var bp = plt.Add.Bars(bars);
         bp.ValueLabelStyle.Bold = false;
         bp.ValueLabelStyle.FontSize = 13;
-        //bp.ValueLabelStyle.OffsetY = 26;
+        bp.ValueLabelStyle.OffsetY = 26;
         bp.ValueLabelStyle.AntiAliasBackground =true;
         bp.ValueLabelStyle.AntiAliasText =true;
         plt.Title("Monthly Running Distance", 15);
