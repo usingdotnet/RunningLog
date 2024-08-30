@@ -92,12 +92,12 @@
 
                 <Label Content="时长：" VerticalAlignment="Center" Margin="5"/>
                 <TextBox Name="TxtDuration" Width="50" Text="" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
+                
+                <Label Content="配速：" VerticalAlignment="Center" Margin="5"/>
+                <TextBox Name="TxtPace" Width="50" Text="" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
 
                 <Label Content="心率：" VerticalAlignment="Center" Margin="5"/>
                 <TextBox Name="TxtHeartRate" Width="50" Text="" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
-
-                <Label Content="配速：" VerticalAlignment="Center" Margin="5"/>
-                <TextBox Name="TxtPace" Width="50" Text="" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
 
                 <Label Content="备注：" VerticalAlignment="Center" Margin="5"/>
                 <TextBox Name="TxtNotes" Width="100" Text="" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
