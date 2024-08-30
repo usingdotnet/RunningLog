@@ -74,7 +74,6 @@ public partial class MainWindow : Window
         LoadConfig();
         InitializeWindowPosition();
         LoadData();
-        InitializeTodayDistance();
         UpdateYearButtonsVisibility();
         SetGitRelatedButtonsVisibility();
     }
@@ -99,15 +98,6 @@ public partial class MainWindow : Window
 
         Top = screenHeight - Height - taskbarHeight + 7;
         Left = (screenWidth - Width) / 2;
-    }
-
-    private void InitializeTodayDistance()
-    {
-        // 移除加载当天跑步距离的代码
-        // if (_data.TryGetValue(_today, out List<double> distances))
-        // {
-        //     TxtDistance.Text = distances.Sum().ToString("F2");
-        // }
     }
 
     private void LoadData()
