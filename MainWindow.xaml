@@ -7,7 +7,7 @@
         mc:Ignorable="d" 
         xmlns:skia="clr-namespace:SkiaSharp.Views.WPF;assembly=SkiaSharp.Views.WPF"
         xmlns:sys="clr-namespace:System;assembly=System.Runtime" Loaded="MainWindow_OnLoaded"
-        Title="跑步日志" Height="430" Width="940">
+        Title="跑步日志" Height="500" Width="940">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -37,6 +37,7 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="7*"/>
@@ -64,7 +65,7 @@
                 <Button Content="2024"/>
                 <Button Content="2023"/>
             </StackPanel>
-            <StackPanel Grid.Column="0" Grid.Row="2" Orientation="Horizontal" Margin="5">
+            <StackPanel Grid.Column="0" Grid.Row="2" Orientation="Horizontal" Margin="5" Grid.ColumnSpan="2">
                 <StackPanel.Resources>
                     <Style x:Key="styleCalendar" TargetType="{x:Type Calendar}">
                         <Setter Property="Template">
@@ -86,13 +87,28 @@
                 <DatePicker DisplayDate="" CalendarStyle="{StaticResource styleCalendar}" SelectedDate="{x:Static sys:DateTime.Now}" 
                         VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Name="DpDate" Margin="5"/>
                 <Label Content="距离：" VerticalAlignment="Center" Margin="5"/>
-                <TextBox Name="TxtDistance" Width="60" Text="" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
+                <TextBox Name="TxtDistance" Width="50" Text="" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
                 <Label Content="公里" VerticalAlignment="Center" Margin="5"/>
+
+                <Label Content="时长：" VerticalAlignment="Center" Margin="5"/>
+                <TextBox Name="TxtDuration" Width="50" Text="" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
+
+                <Label Content="心率：" VerticalAlignment="Center" Margin="5"/>
+                <TextBox Name="TxtHeartRate" Width="50" Text="" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
+
+                <Label Content="配速：" VerticalAlignment="Center" Margin="5"/>
+                <TextBox Name="TxtPace" Width="50" Text="" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
+
+                <Label Content="备注：" VerticalAlignment="Center" Margin="5"/>
+                <TextBox Name="TxtNotes" Width="100" Text="" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
+            </StackPanel>
+            <StackPanel Grid.Column="0" Grid.Row="3" Orientation="Horizontal" Margin="5" Grid.ColumnSpan="2">
                 <Button Name="BtnOk" Content="添加" Margin="30,5,5,5" Width="60" Click="BtnOk_OnClick"/>
                 <Button Name="BtnRevert" Content="撤销" Margin="30,5,5,5" Width="60" Click="BtnRevert_OnClick"/>
                 <Button Name="BtnPublish" Content="发布" Margin="30,5,5,5" Width="60" Click="BtnPublish_OnClick"/>
                 <Button Name="BtnOpen" Content="打开数据目录" Margin="30,5,5,5" Width="90" Click="BtnOpen_OnClick"/>
             </StackPanel>
+
         </Grid>
     </Grid>
 </Window>

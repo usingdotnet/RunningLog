@@ -21,7 +21,7 @@ public enum ChineseDayOfWeek
 public partial class MainWindow : Window
 {
     private int _year = DateTime.Now.Year;
-    private Dictionary<DateTime, List<double>> _data = new Dictionary<DateTime, List<double>>();
+    private Dictionary<DateTime, List<RunData>> _data = new Dictionary<DateTime, List<RunData>>();
     private string _dataDir = "";
     private string _repoDir = "";
     private readonly Logger _logger = LogManager.GetCurrentClassLogger();
@@ -103,18 +103,26 @@ public partial class MainWindow : Window
     private void LoadData()
     {
         var filePath = Path.Combine(_dataDir, $"{_year}.csv");
-        _data = File.Exists(filePath) ? LoadDataFromCsv(filePath) : new Dictionary<DateTime, List<double>>();
+        _data = File.Exists(filePath) ? LoadDataFromCsv(filePath) : new Dictionary<DateTime, List<RunData>>();
     }
 
-    private static Dictionary<DateTime, List<double>> LoadDataFromCsv(string filePath)
+    private static Dictionary<DateTime, List<RunData>> LoadDataFromCsv(string filePath)
     {
         return File.ReadLines(filePath)
+            .Skip(1)
             .Select(line => line.Split(','))
-            .Where(fields => fields.Length >= 2)
+            .Where(fields => fields.Length >= 2) // 确保至少有两个字段
             .GroupBy(fields => DateTime.Parse(fields[0]))
             .ToDictionary(
                 group => group.Key,
-                group => group.Select(fields => double.Parse(fields[1], NumberStyles.Float, CultureInfo.InvariantCulture)).ToList()
+                group => group.Select(fields => new RunData
+                {
+                    Distance = double.Parse(fields[1], NumberStyles.Float, CultureInfo.InvariantCulture),
+                    Duration = fields.Length > 2 && !string.IsNullOrEmpty(fields[2]) ? TimeSpan.Parse(fields[2]) : TimeSpan.Zero, // 处理时长
+                    HeartRate = fields.Length > 3 && !string.IsNullOrEmpty(fields[3]) ? double.Parse(fields[3], NumberStyles.Float, CultureInfo.InvariantCulture) : 0, // 处理心率
+                    Pace = fields.Length > 4 ? fields[4] : string.Empty, // 配速
+                    Notes = fields.Length > 5 ? fields[5] : string.Empty // 处理备注
+                }).ToList()
             );
     }
 
@@ -161,8 +169,8 @@ public partial class MainWindow : Window
         canvas.DrawText(yearText, LeftMargin, YearLabelHeight - 5, yearPaint);
 
         // 绘制统计信息
-        int runningDays = _data.Count(entry => entry.Value.Sum() > 0);
-        double totalDistance = _data.Values.SelectMany(distances => distances).Sum();
+        int runningDays = _data.Count(entry => entry.Value.Sum(r => r.Distance) > 0);
+        double totalDistance = _data.Values.SelectMany(distances => distances).Sum(r => r.Distance);
         string statsText = $"{runningDays} days, {totalDistance:F2} km";
         var statsTextWidth = statsPaint.MeasureText(statsText);
         canvas.DrawText(statsText, FixedWidth - statsTextWidth - 20, YearLabelHeight - 5, statsPaint);
@@ -192,7 +200,7 @@ public partial class MainWindow : Window
         var lastRun = _data.OrderByDescending(x => x.Key).FirstOrDefault();
         if (lastRun.Key != default)
         {
-            string lastRunText = $"Latest：{lastRun.Key.ToShortDateString()}, {lastRun.Value.Sum():F2} km";
+            string lastRunText = $"Latest：{lastRun.Key.ToShortDateString()}, {lastRun.Value.Sum(r => r.Distance):F2} km";
             var lastRunTextWidth = lastRunPaint.MeasureText(lastRunText);
             float heatmapBottom = CalculateHeatmapBottom();
             canvas.DrawText(lastRunText, LeftMargin, heatmapBottom + 30, lastRunPaint);
@@ -288,7 +296,7 @@ public partial class MainWindow : Window
                 if (index < 0 || index >= totalDays) continue;
 
                 var date = startDate.AddDays(index);
-                double totalDistance = _data.TryGetValue(date, out List<double> distances) ? distances.Sum() : 0;
+                double totalDistance = _data.TryGetValue(date, out List<RunData> runs) ? runs.Sum(r => r.Distance) : 0;
 
                 SKColor color = GetDayColor(totalDistance);
 
@@ -387,17 +395,21 @@ public partial class MainWindow : Window
 
     private void BtnOk_OnClick(object sender, RoutedEventArgs e)
     {
-        if (!ValidateInput(out DateTime selectedDate, out double distance))
+        if (!ValidateInput(out DateTime selectedDate, out double distance, out TimeSpan duration, out double heartRate, out string pace, out string notes))
         {
-            ShowMessage("请输入有效的距离和日期。",MessageType.Error);
+            ShowMessage("请输入有效的距离、时长、心率、配速和备注。", MessageType.Error);
             return;
         }
 
-        UpdateDataAndSave(selectedDate, distance);
+        UpdateDataAndSave(selectedDate, distance, duration, heartRate, pace, notes);
         ShowMessage("添加完成。", MessageType.Success);
         
-        // 添加成功后清空 TxtDistance
+        // 添加成功后清空输入框
         TxtDistance.Text = string.Empty;
+        TxtDuration.Text = string.Empty;
+        TxtHeartRate.Text = string.Empty;
+        TxtPace.Text = string.Empty;
+        TxtNotes.Text = string.Empty;
     }
 
     private async void BtnRevert_OnClick(object sender, RoutedEventArgs e)
@@ -453,7 +465,7 @@ public partial class MainWindow : Window
                 if (lastRun.Key != default)
                 {
                     string date = lastRun.Key.Date.ToShortDateString();
-                    await CommitChanges($"{date} 跑步 {lastRun.Value.Sum():F2} 公里");
+                    await CommitChanges($"{date} 跑步 {lastRun.Value.Sum(r => r.Distance):F2} 公里");
                 }
                 else
                 {
@@ -492,17 +504,56 @@ public partial class MainWindow : Window
         await ExecuteGitCommand("push");
     }
 
-    private bool ValidateInput(out DateTime selectedDate, out double distance)
+    private bool ValidateInput(out DateTime selectedDate, out double distance, out TimeSpan duration, out double heartRate, out string pace, out string notes)
     {
         selectedDate = default;
         distance = 0;
-        return DpDate.SelectedDate.HasValue &&
-               double.TryParse(TxtDistance.Text, out distance) &&
-               distance > 0 &&
-               (selectedDate = DpDate.SelectedDate.Value).Year > 0;
+        duration = TimeSpan.Zero;
+        heartRate = 0;
+        pace = "";
+        notes = string.Empty;
+
+        // 确保日期和距离有效
+        if (!DpDate.SelectedDate.HasValue || 
+            !double.TryParse(TxtDistance.Text, out distance) || 
+            (selectedDate = DpDate.SelectedDate.Value).Year <= 0)
+        {
+            return false;
+        }
+
+        // 解析时长格式
+        duration = ParseDuration(TxtDuration.Text);
+
+        // 其他字段可以为空
+        double.TryParse(TxtHeartRate.Text, out heartRate);
+        pace= TxtPace.Text;
+        notes = TxtNotes.Text;
+
+        return true;
     }
 
-    private void UpdateDataAndSave(DateTime selectedDate, double distance)
+    private TimeSpan ParseDuration(string durationString)
+    {
+        if (string.IsNullOrEmpty(durationString))
+        {
+            return TimeSpan.Zero; // 如果输入为空，返回零时长
+        }
+
+        int hours = 0, minutes = 0, seconds = 0;
+
+        // 使用正则表达式解析输入
+        var match = System.Text.RegularExpressions.Regex.Match(durationString, @"(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?");
+        if (match.Success)
+        {
+            if (match.Groups[1].Success) hours = int.Parse(match.Groups[1].Value);
+            if (match.Groups[2].Success) minutes = int.Parse(match.Groups[2].Value);
+            if (match.Groups[3].Success) seconds = int.Parse(match.Groups[3].Value);
+        }
+
+        return new TimeSpan(hours, minutes, seconds);
+    }
+
+    private void UpdateDataAndSave(DateTime selectedDate, double distance, TimeSpan duration, double heartRate, string pace, string notes)
     {
         if (selectedDate.Year != _year)
         {
@@ -513,9 +564,16 @@ public partial class MainWindow : Window
         LogDistanceChange(selectedDate, distance);
         if (!_data.ContainsKey(selectedDate))
         {
-            _data[selectedDate] = new List<double>();
+            _data[selectedDate] = new List<RunData>();
         }
-        _data[selectedDate].Add(distance);
+        _data[selectedDate].Add(new RunData
+        {
+            Distance = distance,
+            Duration = duration,
+            HeartRate = heartRate,
+            Pace = pace,
+            Notes = notes
+        });
         SaveDataToCsv();
         skElement.InvalidateVisual();
     }
@@ -523,9 +581,9 @@ public partial class MainWindow : Window
     private void LogDistanceChange(DateTime selectedDate, double distance)
     {
         var d = selectedDate.ToString("yyyy-MM-dd");
-        if (_data.TryGetValue(selectedDate, out List<double> values))
+        if (_data.TryGetValue(selectedDate, out List<RunData> values))
         {
-            _logger.Debug($"日期 {d} 的距离由 {string.Join(", ", values)} 添加了 {distance}");
+            _logger.Debug($"日期 {d} 的距离由 {string.Join(", ", values.Select(r => r.Distance))} 添加了 {distance}");
         }
         else
         {
@@ -536,7 +594,13 @@ public partial class MainWindow : Window
     private void SaveDataToCsv()
     {
         var sortedData = _data.OrderBy(entry => entry.Key).ToList();
-        var csvLines = sortedData.SelectMany(entry => entry.Value.Select(value => $"{entry.Key:yyyy-MM-dd},{value:F2}"));
+        var csvLines = new List<string>
+        {
+            "Date,Distance,Duration,HeartRate,Pace,Notes" // 添加表头
+        };
+
+        csvLines.AddRange(sortedData.SelectMany(entry => entry.Value.Select(value => 
+            $"{entry.Key:yyyy-MM-dd},{value.Distance:F2},{value.Duration},{value.HeartRate},{value.Pace},{value.Notes}")));
         var file = Path.Combine(_dataDir, $"{_year}.csv");
         File.WriteAllLines(file, csvLines);
     }
