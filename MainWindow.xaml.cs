@@ -684,13 +684,17 @@ public partial class MainWindow : Window
         {
             var bar = new Bar() { Position = v.Index + 1, Value = v.Item, Error = 0, FillColor = Colors.Orange };
             double v1 = Math.Round(bar.Value, 2);
-            bar.Label = v1.ToString();
+            if (v1 > 0)
+            {
+                bar.Label = $"{v1.ToString()} km";
+            }
+            else
+            {
+                bar.Label = string.Empty;
+            }
+
             bars.Add(bar);
         }
-
-        // Add a hide bar to let hight bar's label show
-        var bar1 = new Bar() { Position = 1, Value = monthlyDistances.Max() * 1.2, Error = 0, FillColor = Colors.Orange, IsVisible = false };
-        bars.Add(bar1);
 
         var bp = plt.Add.Bars(bars);
         bp.ValueLabelStyle.Bold = false;
@@ -700,7 +704,7 @@ public partial class MainWindow : Window
         bp.ValueLabelStyle.AntiAliasText = true;
         plt.Title("Monthly Running Distance", 15);
         plt.YLabel("Distance (km)", 15);
-
+        plt.Axes.SetLimitsY(0, monthlyDistances.Max() * 1.25);
         Tick[] ticks =
         {
             new(1, "Jan"),
@@ -719,10 +723,7 @@ public partial class MainWindow : Window
 
         plt.Axes.Bottom.TickGenerator = new ScottPlot.TickGenerators.NumericManual(ticks);
         plt.Axes.Bottom.MajorTickStyle.Length = 0;
-
-        plt.Axes.Margins(bottom: 0);
         WpfPlot1.Plot.Font.Automatic();
-        WpfPlot1.Plot.Axes.AutoScale();
         WpfPlot1.Refresh();
     }
 }
