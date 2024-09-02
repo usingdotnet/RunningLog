@@ -45,6 +45,8 @@ public partial class MainWindow : Window
     private AppConfig _config;
     private string ConfigFile = "config.toml";
     private int _lastInsertedId = 0;
+    private RunningDataService _runningDataService = new RunningDataService();
+    private GitService _gitService = new GitService();
 
     private void LoadConfig()
     {
@@ -66,6 +68,7 @@ public partial class MainWindow : Window
         _isDarkMode = _config.IsDarkMode;
         _repoDir = _config.RepoDir;
         _dataDir = Path.Combine(_repoDir, "data");
+        _runningDataService.DataDir = _dataDir;
     }
 
     private void SaveConfig()
@@ -80,7 +83,7 @@ public partial class MainWindow : Window
         InitializeComponent();
         LoadConfig();
         InitializeWindowPosition();
-        LoadData();
+        _data = _runningDataService.LoadData(_year);
         UpdateYearButtonsVisibility();
         SetGitRelatedButtonsVisibility();
     }
@@ -105,20 +108,6 @@ public partial class MainWindow : Window
 
         Top = screenHeight - Height - taskbarHeight + 7;
         Left = (screenWidth - Width) / 2;
-    }
-
-    private void LoadData()
-    {
-        string dbPath = Path.Combine(_dataDir, "RunningLog.db");
-        using (var connection = new SQLiteConnection($"Data Source={dbPath};Version=3;"))
-        {
-            connection.Open();
-            var startDate = new DateTime(_year, 1, 1);
-            var endDate = new DateTime(_year + 1, 1, 1); // 下一年的1月1日
-            _data = connection.Query<RunData>("SELECT * FROM RunData WHERE Date >= @StartDate AND Date < @EndDate", new { StartDate = startDate.ToString("yyyy-MM-dd"), EndDate = endDate.ToString("yyyy-MM-dd") })
-                .GroupBy(r => DateTime.Parse(r.Date))
-                .ToDictionary(g => g.Key, g => g.ToList());
-        }
     }
 
     private bool DoesYearHasData(int year)
@@ -388,7 +377,8 @@ public partial class MainWindow : Window
         if (e.OriginalSource is Button button && int.TryParse(button.Content.ToString(), out int year))
         {
             _year = year;
-            LoadData();
+            _data = _runningDataService.LoadData(_year);
+
             skElement.InvalidateVisual();
             UpdateYearButtonsVisibility();
         }
@@ -440,7 +430,8 @@ public partial class MainWindow : Window
                     await connection.DeleteAsync(runDataToDelete);
                     SlideMessage.ShowMessage("成功删除最后添加的记录", MessageType.Success);
                     _lastInsertedId = 0; // 重置ID
-                    LoadData();
+                    _data = _runningDataService.LoadData(_year);
+
                     skElement.InvalidateVisual();
                 }
             }
@@ -598,7 +589,8 @@ public partial class MainWindow : Window
         }
 
         _year = selectedDate.Year;
-        LoadData();
+        _data = _runningDataService.LoadData(_year);
+
         skElement.InvalidateVisual();
         return _lastInsertedId; // 返回ID
     }
