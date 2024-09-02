@@ -44,6 +44,7 @@ public partial class MainWindow : Window
     private const int HeaderHeight = YearLabelHeight + 10;
     private AppConfig _config;
     private string ConfigFile = "config.toml";
+    private int _lastInsertedId = 0;
 
     private void LoadConfig()
     {
@@ -64,7 +65,7 @@ public partial class MainWindow : Window
 
         _isDarkMode = _config.IsDarkMode;
         _repoDir = _config.RepoDir;
-        _dataDir = Path.Combine(_repoDir,"data");
+        _dataDir = Path.Combine(_repoDir, "data");
     }
 
     private void SaveConfig()
@@ -126,7 +127,7 @@ public partial class MainWindow : Window
         DrawHeatmap(canvas);
         DrawLastRunInfo(canvas);
         DrawLegend(canvas);
-        
+
         // 绘制每月跑量图表
         var monthlyDistances = GetMonthlyDistances();
         DrawMonthlyDistancePlot(monthlyDistances);
@@ -261,7 +262,6 @@ public partial class MainWindow : Window
         var startDate = new DateTime(_year, 1, 1);
         string[] monthAbbreviations = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
 
-        // 减小字体大小
         labelPaint.TextSize = 12;
 
         for (int month = 1; month <= 12; month++)
@@ -397,9 +397,9 @@ public partial class MainWindow : Window
             return;
         }
 
-        UpdateDataAndSave(selectedDate, distance, duration, heartRate, pace, notes);
+        _lastInsertedId = UpdateDataAndSave(selectedDate, distance, duration, heartRate, pace, notes);
         ShowMessage("添加完成。", MessageType.Success);
-        
+
         // 添加成功后清空输入框
         TxtDistance.Text = string.Empty;
         TxtDuration.Text = string.Empty;
@@ -412,22 +412,27 @@ public partial class MainWindow : Window
     {
         try
         {
-            var status = await GetGitStatus();
-            if (!string.IsNullOrEmpty(status))
+            if (_lastInsertedId != 0)
             {
-                await ExecuteGitCommand("reset --hard HEAD");
-                SlideMessage.ShowMessage("成功撤销所有修改", MessageType.Success);
-                LoadData();
-                skElement.InvalidateVisual();
+                await using (var connection = new SQLiteConnection($"Data Source={Path.Combine(_dataDir, "RunningLog.db")};Version=3;"))
+                {
+                    connection.Open();
+                    var runDataToDelete = new RunData { Id = _lastInsertedId };
+                    await connection.DeleteAsync(runDataToDelete);
+                    SlideMessage.ShowMessage("成功删除最后添加的记录", MessageType.Success);
+                    _lastInsertedId = 0; // 重置ID
+                    LoadData();
+                    skElement.InvalidateVisual();
+                }
             }
             else
             {
-                SlideMessage.ShowMessage("没有需要撤销的修改", MessageType.Warning);
+                SlideMessage.ShowMessage("没有可删除的记录", MessageType.Warning);
             }
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"重置操作失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"删除操作失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -510,8 +515,8 @@ public partial class MainWindow : Window
         notes = string.Empty;
 
         // 确保日期和距离有效
-        if (!DpDate.SelectedDate.HasValue || 
-            !double.TryParse(TxtDistance.Text, out distance) || 
+        if (!DpDate.SelectedDate.HasValue ||
+            !double.TryParse(TxtDistance.Text, out distance) ||
             (selectedDate = DpDate.SelectedDate.Value).Year <= 0)
         {
             return false;
@@ -522,7 +527,7 @@ public partial class MainWindow : Window
 
         // 其他字段可以为空
         double.TryParse(TxtHeartRate.Text, out heartRate);
-        pace= TxtPace.Text;
+        pace = TxtPace.Text;
         notes = TxtNotes.Text;
 
         return true;
@@ -549,29 +554,34 @@ public partial class MainWindow : Window
         return durationString;
     }
 
-    private void UpdateDataAndSave(DateTime selectedDate, double distance, string duration, double heartRate, string pace, string notes)
+    private int UpdateDataAndSave(DateTime selectedDate, double distance, string duration, double heartRate, string pace, string notes)
     {
-        if (selectedDate.Year != _year)
-        {
-            _year = selectedDate.Year;
-            LoadData();
-        }
-
         LogDistanceChange(selectedDate, distance);
         if (!_data.ContainsKey(selectedDate))
         {
             _data[selectedDate] = new List<RunData>();
         }
-        _data[selectedDate].Add(new RunData
+
+        var runData = new RunData
         {
+            Date = selectedDate.ToString("yyyy-MM-dd"),
             Distance = distance,
             Duration = duration,
             HeartRate = heartRate,
             Pace = pace,
             Notes = notes
-        });
-        SaveDataToDatabase(selectedDate, distance, duration, heartRate, pace, notes);
+        };
+
+        using (var connection = new SQLiteConnection($"Data Source={Path.Combine(_dataDir, "RunningLog.db")};Version=3;"))
+        {
+            connection.Open();
+            _lastInsertedId = (int)connection.Insert(runData); // 返回新插入记录的ID
+        }
+
+        _year = selectedDate.Year;
+        LoadData();
         skElement.InvalidateVisual();
+        return _lastInsertedId; // 返回ID
     }
 
     private void LogDistanceChange(DateTime selectedDate, double distance)
@@ -584,25 +594,6 @@ public partial class MainWindow : Window
         else
         {
             _logger.Debug($"添加日期 {d} 的距离 {distance}");
-        }
-    }
-
-    private void SaveDataToDatabase(DateTime selectedDate, double distance, string duration, double heartRate, string pace, string notes)
-    {
-        using (var connection = new SQLiteConnection($"Data Source={Path.Combine(_dataDir, "RunningLog.db")};Version=3;"))
-        {
-            connection.Open();
-            var runData = new RunData
-            {
-                Date = selectedDate.ToString("yyyy-MM-dd"),
-                Distance = distance,
-                Duration = duration.ToString(),
-                HeartRate = heartRate,
-                Pace = pace,
-                Notes = notes
-            };
-
-            connection.Insert(runData);
         }
     }
 
@@ -688,7 +679,7 @@ public partial class MainWindow : Window
         List<Bar> bars = new List<Bar>();
         foreach (var v in monthlyDistances.Index())
         {
-            var bar = new Bar() { Position = v.Index+1, Value = v.Item, Error = 0, FillColor = Colors.Orange };
+            var bar = new Bar() { Position = v.Index + 1, Value = v.Item, Error = 0, FillColor = Colors.Orange };
             double v1 = Math.Round(bar.Value, 2);
             bar.Label = v1.ToString();
             bars.Add(bar);
@@ -698,10 +689,10 @@ public partial class MainWindow : Window
         bp.ValueLabelStyle.Bold = false;
         bp.ValueLabelStyle.FontSize = 13;
         bp.ValueLabelStyle.OffsetY = 26;
-        bp.ValueLabelStyle.AntiAliasBackground =true;
-        bp.ValueLabelStyle.AntiAliasText =true;
+        bp.ValueLabelStyle.AntiAliasBackground = true;
+        bp.ValueLabelStyle.AntiAliasText = true;
         plt.Title("Monthly Running Distance", 15);
-        plt.YLabel("Distance (km)",15);
+        plt.YLabel("Distance (km)", 15);
 
         Tick[] ticks =
         {
