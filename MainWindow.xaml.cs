@@ -121,6 +121,22 @@ public partial class MainWindow : Window
         }
     }
 
+    private bool DoesYearHasData(int year)
+    {
+        string dbPath = Path.Combine(_dataDir, "RunningLog.db");
+        using (var connection = new SQLiteConnection($"Data Source={dbPath};Version=3;"))
+        {
+            connection.Open();
+            var startDate = new DateTime(year, 1, 1);
+            var endDate = new DateTime(year + 1, 1, 1); // 下一年的1月1日
+            var c = connection.ExecuteScalar<int>(
+                    "SELECT count(*) FROM RunData WHERE Date >= @StartDate AND Date < @EndDate", 
+                    new { StartDate = startDate.ToString("yyyy-MM-dd"), EndDate = endDate.ToString("yyyy-MM-dd") });
+
+            return c > 0;
+        }
+    }
+
     private void OnPaintSurface(object sender, SKPaintSurfaceEventArgs e)
     {
         var canvas = e.Surface.Canvas;
@@ -637,7 +653,9 @@ public partial class MainWindow : Window
         {
             if (child is Button button && int.TryParse(button.Content.ToString(), out int buttonYear))
             {
-                button.Visibility = buttonYear <= currentYear ? Visibility.Visible : Visibility.Collapsed;
+                // 检查该年份是否有跑步数据
+                bool hasDataForYear =  DoesYearHasData(buttonYear);
+                button.Visibility = hasDataForYear && buttonYear <= currentYear ? Visibility.Visible : Visibility.Collapsed;
             }
         }
     }
