@@ -113,7 +113,9 @@ public partial class MainWindow : Window
         using (var connection = new SQLiteConnection($"Data Source={dbPath};Version=3;"))
         {
             connection.Open();
-            _data = connection.Query<RunData>("SELECT * FROM RunData WHERE Date LIKE @Year", new { Year = $"{_year}%" })
+            var startDate = new DateTime(_year, 1, 1);
+            var endDate = new DateTime(_year + 1, 1, 1); // 下一年的1月1日
+            _data = connection.Query<RunData>("SELECT * FROM RunData WHERE Date >= @StartDate AND Date < @EndDate", new { StartDate = startDate.ToString("yyyy-MM-dd"), EndDate = endDate.ToString("yyyy-MM-dd") })
                 .GroupBy(r => DateTime.Parse(r.Date))
                 .ToDictionary(g => g.Key, g => g.ToList());
         }
@@ -260,7 +262,8 @@ public partial class MainWindow : Window
     private void DrawMonthLabels(SKCanvas canvas, SKPaint labelPaint)
     {
         var startDate = new DateTime(_year, 1, 1);
-        string[] monthAbbreviations = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+        string[] monthAbbreviations = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+        ];
 
         labelPaint.TextSize = 12;
 
@@ -685,10 +688,14 @@ public partial class MainWindow : Window
             bars.Add(bar);
         }
 
+        // Add a hide bar to let hight bar's label show
+        var bar1 = new Bar() { Position = 1, Value = monthlyDistances.Max() * 1.2, Error = 0, FillColor = Colors.Orange, IsVisible = false };
+        bars.Add(bar1);
+
         var bp = plt.Add.Bars(bars);
         bp.ValueLabelStyle.Bold = false;
         bp.ValueLabelStyle.FontSize = 13;
-        bp.ValueLabelStyle.OffsetY = 26;
+        bp.ValueLabelStyle.OffsetY = 5;
         bp.ValueLabelStyle.AntiAliasBackground = true;
         bp.ValueLabelStyle.AntiAliasText = true;
         plt.Title("Monthly Running Distance", 15);
