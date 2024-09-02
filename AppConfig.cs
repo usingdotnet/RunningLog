@@ -1,4 +1,6 @@
-﻿namespace RunningLog;
+﻿using Dapper.Contrib.Extensions;
+
+namespace RunningLog;
 
 public class AppConfig
 {
@@ -7,11 +9,16 @@ public class AppConfig
     public string RepoDir { get; set; } = @"E:\Data\MyRunningLog";
 }
 
+[Table("RunData")]
 public class RunData
 {
+    public int Id { get; set; }
+
+    public string Date { get; set; }
+
     public double Distance { get; set; }
 
-    public TimeSpan Duration { get; set; }
+    public string Duration { get; set; }
 
     public double HeartRate { get; set; }
 

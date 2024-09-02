@@ -12,6 +12,10 @@ using System.Diagnostics;
 using System.Reflection;
 using ScottPlot;
 using ScottPlot.Plottables;
+using System.Data.SQLite;
+using Dapper;
+using Dapper.Contrib;
+using Dapper.Contrib.Extensions;
 
 namespace RunningLog;
 
@@ -104,28 +108,14 @@ public partial class MainWindow : Window
 
     private void LoadData()
     {
-        var filePath = Path.Combine(_dataDir, $"{_year}.csv");
-        _data = File.Exists(filePath) ? LoadDataFromCsv(filePath) : new Dictionary<DateTime, List<RunData>>();
-    }
-
-    private static Dictionary<DateTime, List<RunData>> LoadDataFromCsv(string filePath)
-    {
-        return File.ReadLines(filePath)
-            .Skip(1)
-            .Select(line => line.Split(','))
-            .Where(fields => fields.Length >= 2) // 确保至少有两个字段
-            .GroupBy(fields => DateTime.Parse(fields[0]))
-            .ToDictionary(
-                group => group.Key,
-                group => group.Select(fields => new RunData
-                {
-                    Distance = double.Parse(fields[1], NumberStyles.Float, CultureInfo.InvariantCulture),
-                    Duration = fields.Length > 2 && !string.IsNullOrEmpty(fields[2]) ? TimeSpan.Parse(fields[2]) : TimeSpan.Zero, // 处理时长
-                    HeartRate = fields.Length > 3 && !string.IsNullOrEmpty(fields[3]) ? double.Parse(fields[3], NumberStyles.Float, CultureInfo.InvariantCulture) : 0, // 处理心率
-                    Pace = fields.Length > 4 ? fields[4] : string.Empty, // 配速
-                    Notes = fields.Length > 5 ? fields[5] : string.Empty // 处理备注
-                }).ToList()
-            );
+        string dbPath = Path.Combine(_dataDir, "RunningLog.db");
+        using (var connection = new SQLiteConnection($"Data Source={dbPath};Version=3;"))
+        {
+            connection.Open();
+            _data = connection.Query<RunData>("SELECT * FROM RunData WHERE Date LIKE @Year", new { Year = $"{_year}%" })
+                .GroupBy(r => DateTime.Parse(r.Date))
+                .ToDictionary(g => g.Key, g => g.ToList());
+        }
     }
 
     private void OnPaintSurface(object sender, SKPaintSurfaceEventArgs e)
@@ -322,24 +312,24 @@ public partial class MainWindow : Window
 
     private void SavePng(SKSurface surface)
     {
-        string csvFilePath = Path.Combine(_dataDir, $"{_year}.csv");
+        string dbFilePath = Path.Combine(_dataDir, "RunningLog.db");
         string pngFilePath = Path.Combine(_dataDir, $"{_year}.png");
 
-        if (File.Exists(csvFilePath) && File.Exists(pngFilePath))
+        if (File.Exists(dbFilePath) && File.Exists(pngFilePath))
         {
-            DateTime csvLastModified = File.GetLastWriteTime(csvFilePath);
+            DateTime dbLastModified = File.GetLastWriteTime(dbFilePath);
             DateTime pngLastModified = File.GetLastWriteTime(pngFilePath);
 
-            if (csvLastModified <= pngLastModified)
+            if (dbLastModified <= pngLastModified)
             {
-                // CSV文件未修改或PNG文件比CSV文件新,无需重新生成PNG
+                // db文件未修改或PNG文件比db文件新,无需重新生成PNG
                 //return;
             }
         }
 
-        else if (!File.Exists(csvFilePath))
+        else if (!File.Exists(dbFilePath))
         {
-            // CSV文件不存在,无法生成PNG
+            // db文件不存在,无法生成PNG
             return;
         }
 
@@ -401,7 +391,7 @@ public partial class MainWindow : Window
 
     private void BtnOk_OnClick(object sender, RoutedEventArgs e)
     {
-        if (!ValidateInput(out DateTime selectedDate, out double distance, out TimeSpan duration, out double heartRate, out string pace, out string notes))
+        if (!ValidateInput(out DateTime selectedDate, out double distance, out string duration, out double heartRate, out string pace, out string notes))
         {
             ShowMessage("请输入有效的距离、时长、心率、配速和备注。", MessageType.Error);
             return;
@@ -510,11 +500,11 @@ public partial class MainWindow : Window
         await ExecuteGitCommand("push");
     }
 
-    private bool ValidateInput(out DateTime selectedDate, out double distance, out TimeSpan duration, out double heartRate, out string pace, out string notes)
+    private bool ValidateInput(out DateTime selectedDate, out double distance, out string duration, out double heartRate, out string pace, out string notes)
     {
         selectedDate = default;
         distance = 0;
-        duration = TimeSpan.Zero;
+        duration = "";
         heartRate = 0;
         pace = "";
         notes = string.Empty;
@@ -538,11 +528,11 @@ public partial class MainWindow : Window
         return true;
     }
 
-    private TimeSpan ParseDuration(string durationString)
+    private string ParseDuration(string durationString)
     {
         if (string.IsNullOrEmpty(durationString))
         {
-            return TimeSpan.Zero; // 如果输入为空，返回零时长
+            return ""; // 如果输入为空，返回零时长
         }
 
         int hours = 0, minutes = 0, seconds = 0;
@@ -556,10 +546,10 @@ public partial class MainWindow : Window
             if (match.Groups[3].Success) seconds = int.Parse(match.Groups[3].Value);
         }
 
-        return new TimeSpan(hours, minutes, seconds);
+        return durationString;
     }
 
-    private void UpdateDataAndSave(DateTime selectedDate, double distance, TimeSpan duration, double heartRate, string pace, string notes)
+    private void UpdateDataAndSave(DateTime selectedDate, double distance, string duration, double heartRate, string pace, string notes)
     {
         if (selectedDate.Year != _year)
         {
@@ -580,7 +570,7 @@ public partial class MainWindow : Window
             Pace = pace,
             Notes = notes
         });
-        SaveDataToCsv();
+        SaveDataToDatabase(selectedDate, distance, duration, heartRate, pace, notes);
         skElement.InvalidateVisual();
     }
 
@@ -597,18 +587,23 @@ public partial class MainWindow : Window
         }
     }
 
-    private void SaveDataToCsv()
+    private void SaveDataToDatabase(DateTime selectedDate, double distance, string duration, double heartRate, string pace, string notes)
     {
-        var sortedData = _data.OrderBy(entry => entry.Key).ToList();
-        var csvLines = new List<string>
+        using (var connection = new SQLiteConnection($"Data Source={Path.Combine(_dataDir, "RunningLog.db")};Version=3;"))
         {
-            "Date,Distance,Duration,HeartRate,Pace,Notes" // 添加表头
-        };
+            connection.Open();
+            var runData = new RunData
+            {
+                Date = selectedDate.ToString("yyyy-MM-dd"),
+                Distance = distance,
+                Duration = duration.ToString(),
+                HeartRate = heartRate,
+                Pace = pace,
+                Notes = notes
+            };
 
-        csvLines.AddRange(sortedData.SelectMany(entry => entry.Value.Select(value => 
-            $"{entry.Key:yyyy-MM-dd},{value.Distance:F2},{value.Duration},{value.HeartRate},{value.Pace},{value.Notes}")));
-        var file = Path.Combine(_dataDir, $"{_year}.csv");
-        File.WriteAllLines(file, csvLines);
+            connection.Insert(runData);
+        }
     }
 
     private async Task<string> GetGitStatus()
