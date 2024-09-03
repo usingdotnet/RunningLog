@@ -490,7 +490,8 @@ public partial class MainWindow : Window
 
         // 其他字段可以为空
         double.TryParse(TxtHeartRate.Text, out heartRate);
-        pace = TxtPace.Text;
+        var pt = TxtPace.Text.Split(".");
+        pace = $"{pt[0]}′{pt[1]}″";//6′46″
         notes = TxtNotes.Text;
 
         return true;
@@ -505,16 +506,44 @@ public partial class MainWindow : Window
 
         int hours = 0, minutes = 0, seconds = 0;
 
-        // 使用正则表达式解析输入
-        var match = System.Text.RegularExpressions.Regex.Match(durationString, @"(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?");
-        if (match.Success)
+        // 使用 . 分隔输入
+        var parts = durationString.Split('.');
+        if (parts.Length > 0)
         {
-            if (match.Groups[1].Success) hours = int.Parse(match.Groups[1].Value);
-            if (match.Groups[2].Success) minutes = int.Parse(match.Groups[2].Value);
-            if (match.Groups[3].Success) seconds = int.Parse(match.Groups[3].Value);
+            // 解析小时
+            if (parts.Length == 3)
+            {
+                hours = int.Parse(parts[0]);
+                minutes = int.Parse(parts[1]);
+                seconds = int.Parse(parts[2]);
+            }
+            else if (parts.Length == 2)
+            {
+                minutes = int.Parse(parts[0]);
+                seconds = int.Parse(parts[1]);
+            }
+            else if (parts.Length == 1)
+            {
+                minutes = int.Parse(parts[0]);
+            }
         }
 
-        return durationString;
+        // 构建返回字符串
+        var result = "";
+        if (hours > 0)
+        {
+            result += $"{hours}h";
+        }
+        if (minutes > 0 || hours > 0) // 如果有小时，分钟可以为0
+        {
+            result += $"{minutes}min";
+        }
+        if (seconds > 0 || (hours == 0 && minutes == 0)) // 如果没有小时和分钟，秒可以为0
+        {
+            result += $"{seconds}s";
+        }
+
+        return result;
     }
 
     private int UpdateDataAndSave(DateTime selectedDate, double distance, string duration, double heartRate, string pace, string notes)
