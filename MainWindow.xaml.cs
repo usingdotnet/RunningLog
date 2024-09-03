@@ -4,9 +4,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using NLog;
-using CliWrap;
 using Tomlet;
-using CliWrap.Buffered;
 using System.Diagnostics;
 using System.Reflection;
 using ScottPlot;
@@ -21,12 +19,11 @@ public enum ChineseDayOfWeek
 public partial class MainWindow : Window
 {
     private int _year = DateTime.Now.Year;
-    private Dictionary<DateTime, List<RunData>> _data = new Dictionary<DateTime, List<RunData>>();
+    private Dictionary<DateTime, List<RunData>> _data;
     private string _dataDir = "";
     private string _repoDir = "";
     private readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private bool _isDarkMode = true;
-    private readonly DateTime _today = DateTime.Now.Date;
 
     private const int CellSize = 12;
     private const int CellPadding = 2;
@@ -39,8 +36,23 @@ public partial class MainWindow : Window
     private AppConfig _config;
     private string ConfigFile = "config.toml";
     private int _lastInsertedId = 0;
-    private RunningDataService _runningDataService = new RunningDataService();
-    private GitService _gitService = new GitService();
+    private RunningDataService _runningDataService;
+    private GitService _gitService;
+
+    public MainWindow()
+    {
+        InitializeComponent();
+        LoadConfig();
+        InitializeWindowPosition();
+        _data = _runningDataService.LoadData(_year);
+        UpdateYearButtonsVisibility();
+        SetGitRelatedButtonsVisibility();
+    }
+
+    private void MainWindow_OnLoaded(object sender, RoutedEventArgs e)
+    {
+
+    }
 
     private void LoadConfig()
     {
@@ -62,7 +74,8 @@ public partial class MainWindow : Window
         _isDarkMode = _config.IsDarkMode;
         _repoDir = _config.RepoDir;
         _dataDir = Path.Combine(_repoDir, "data");
-        _runningDataService.DataDir = _dataDir;
+        _runningDataService = new RunningDataService(_dataDir);
+        _gitService = new GitService(_repoDir);
     }
 
     private void SaveConfig()
@@ -72,26 +85,11 @@ public partial class MainWindow : Window
         File.WriteAllText(ConfigFile, tomlString);
     }
 
-    public MainWindow()
-    {
-        InitializeComponent();
-        LoadConfig();
-        InitializeWindowPosition();
-        _data = _runningDataService.LoadData(_year);
-        UpdateYearButtonsVisibility();
-        SetGitRelatedButtonsVisibility();
-    }
-
     private void SetGitRelatedButtonsVisibility()
     {
-        var visibility = IsGitRepository() ? Visibility.Visible : Visibility.Collapsed;
+        var visibility = _gitService.IsGitRepository() ? Visibility.Visible : Visibility.Collapsed;
         BtnRevert.Visibility = visibility;
         BtnPublish.Visibility = visibility;
-    }
-
-    private void MainWindow_OnLoaded(object sender, RoutedEventArgs e)
-    {
-
     }
 
     private void InitializeWindowPosition()
@@ -114,7 +112,7 @@ public partial class MainWindow : Window
         DrawLegend(canvas);
 
         // 绘制每月跑量图表
-        var monthlyDistances = GetMonthlyDistances();
+        double[] monthlyDistances = GetMonthlyDistances();
         DrawMonthlyDistancePlot(monthlyDistances);
         SavePng(e.Surface);
     }
@@ -423,7 +421,7 @@ public partial class MainWindow : Window
 
     private async void BtnPublish_OnClick(object sender, RoutedEventArgs e)
     {
-        if (!IsGitRepository())
+        if (!_gitService.IsGitRepository())
         {
             ShowMessage("当前目录不是Git仓库。", MessageType.Error);
             return;
@@ -432,11 +430,11 @@ public partial class MainWindow : Window
         try
         {
             // 检查是否有未提交的更改
-            string status = await GetGitStatus();
+            string status = await _gitService.GetGitStatus();
             bool hasChanges = !string.IsNullOrWhiteSpace(status);
 
             // 检查是否有未推送的提交
-            string unpushedCommits = await GetUnpushedCommits();
+            string unpushedCommits = await _gitService.GetUnpushedCommits();
             bool hasUnpushedCommits = !string.IsNullOrWhiteSpace(unpushedCommits);
 
             if (!hasChanges && !hasUnpushedCommits)
@@ -451,7 +449,7 @@ public partial class MainWindow : Window
                 if (lastRun.Key != default)
                 {
                     string date = lastRun.Key.Date.ToShortDateString();
-                    await CommitChanges($"{date} 跑步 {lastRun.Value.Sum(r => r.Distance):F2} 公里");
+                    await _gitService.CommitChanges($"{date} 跑步 {lastRun.Value.Sum(r => r.Distance):F2} 公里");
                 }
                 else
                 {
@@ -461,33 +459,13 @@ public partial class MainWindow : Window
             }
 
             // 推送所有提交
-            await PushChanges();
+            await _gitService.PushChanges();
             ShowMessage("成功发布更改。", MessageType.Success);
         }
         catch (Exception ex)
         {
             ShowMessage($"发布过程中出错: {ex.Message}", MessageType.Error);
         }
-    }
-
-    private async Task<string> GetUnpushedCommits()
-    {
-        var result = await Cli.Wrap("git")
-            .WithArguments("log @{u}..HEAD --oneline")
-            .WithWorkingDirectory(_repoDir)
-            .ExecuteBufferedAsync();
-
-        return result.StandardOutput.Trim();
-    }
-
-    private async Task CommitChanges(string message)
-    {
-        await ExecuteGitCommand($"commit -a -m \"{message}\"");
-    }
-
-    private async Task PushChanges()
-    {
-        await ExecuteGitCommand("push");
     }
 
     private bool ValidateInput(out DateTime selectedDate, out double distance, out string duration, out double heartRate, out string pace, out string notes)
@@ -577,31 +555,6 @@ public partial class MainWindow : Window
         {
             _logger.Debug($"添加日期 {d} 的距离 {distance}");
         }
-    }
-
-    private async Task<string> GetGitStatus()
-    {
-        var result = await Cli.Wrap("git")
-            .WithArguments("status --porcelain")
-            .WithWorkingDirectory(_repoDir)
-            .ExecuteBufferedAsync();
-
-        return result.StandardOutput.Trim();
-    }
-
-    private async Task ExecuteGitCommand(string arguments)
-    {
-        await Cli.Wrap("git")
-            .WithArguments(arguments)
-            .WithWorkingDirectory(_repoDir)
-            .WithStandardOutputPipe(PipeTarget.ToDelegate(s => _logger.Debug(s)))
-            .WithStandardErrorPipe(PipeTarget.ToDelegate(s => _logger.Debug(s)))
-            .ExecuteAsync();
-    }
-
-    private bool IsGitRepository()
-    {
-        return Directory.Exists(Path.Combine(_repoDir, ".git"));
     }
 
     private void ShowMessage(string message, MessageType type)

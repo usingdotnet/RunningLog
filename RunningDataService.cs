@@ -1,18 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data.SQLite;
+﻿using System.Data.SQLite;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Dapper;
 using Dapper.Contrib.Extensions;
 
 namespace RunningLog;
 
-internal class RunningDataService
+internal class RunningDataService(string dataDir)
 {
-    public string DataDir { get; set; }
+    public string DataDir { get; set; } = dataDir;
 
     public Dictionary<DateTime, List<RunData>> LoadData(int year)
     {
