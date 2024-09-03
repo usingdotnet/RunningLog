@@ -492,8 +492,11 @@ public partial class MainWindow : Window
         double.TryParse(TxtHeartRate.Text, out heartRate);
         if (!string.IsNullOrEmpty(TxtPace.Text))
         {
-            var pt = TxtPace.Text.Split(".");
-            pace = $"{pt[0]}′{pt[1]}″";//6′46″
+            var pt = TxtPace.Text.Split(".");// 允许输入6.23，解析为 6′23″
+            if (pt.Length == 2)
+            {
+                pace = $"{pt[0]}′{pt[1]}″"; //6′46″
+            }
         }
 
         notes = TxtNotes.Text;
