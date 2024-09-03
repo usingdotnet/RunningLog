@@ -448,7 +448,7 @@ public partial class MainWindow : Window
                 var lastRun = _data.OrderByDescending(x => x.Key).FirstOrDefault();
                 if (lastRun.Key != default)
                 {
-                    string date = lastRun.Key.Date.ToShortDateString();
+                    string date = lastRun.Key.ToShortDateString();
                     await _gitService.CommitChanges($"{date} 跑步 {lastRun.Value.Sum(r => r.Distance):F2} 公里");
                 }
                 else
@@ -527,7 +527,7 @@ public partial class MainWindow : Window
 
         var runData = new RunData
         {
-            Date = selectedDate.ToString("yyyy-MM-dd"),
+            Date = selectedDate,
             Distance = distance,
             Duration = duration,
             HeartRate = heartRate,

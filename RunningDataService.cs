@@ -18,7 +18,7 @@ internal class RunningDataService(string dataDir)
             var startDate = new DateTime(year, 1, 1);
             var endDate = new DateTime(year + 1, 1, 1); // 下一年的1月1日
             var data = connection.Query<RunData>("SELECT * FROM RunData WHERE Date >= @StartDate AND Date < @EndDate", new { StartDate = startDate.ToString("yyyy-MM-dd"), EndDate = endDate.ToString("yyyy-MM-dd") })
-                .GroupBy(r => DateTime.Parse(r.Date))
+                .GroupBy(r => r.Date)
                 .ToDictionary(g => g.Key, g => g.ToList());
             return data;
         }
