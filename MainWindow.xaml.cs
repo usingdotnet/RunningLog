@@ -1,6 +1,5 @@
 ﻿using SkiaSharp;
 using SkiaSharp.Views.Desktop;
-using System.Globalization;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -11,11 +10,6 @@ using CliWrap.Buffered;
 using System.Diagnostics;
 using System.Reflection;
 using ScottPlot;
-using ScottPlot.Plottables;
-using System.Data.SQLite;
-using Dapper;
-using Dapper.Contrib;
-using Dapper.Contrib.Extensions;
 
 namespace RunningLog;
 
@@ -108,22 +102,6 @@ public partial class MainWindow : Window
 
         Top = screenHeight - Height - taskbarHeight + 7;
         Left = (screenWidth - Width) / 2;
-    }
-
-    private bool DoesYearHasData(int year)
-    {
-        string dbPath = Path.Combine(_dataDir, "RunningLog.db");
-        using (var connection = new SQLiteConnection($"Data Source={dbPath};Version=3;"))
-        {
-            connection.Open();
-            var startDate = new DateTime(year, 1, 1);
-            var endDate = new DateTime(year + 1, 1, 1); // 下一年的1月1日
-            var c = connection.ExecuteScalar<int>(
-                    "SELECT count(*) FROM RunData WHERE Date >= @StartDate AND Date < @EndDate", 
-                    new { StartDate = startDate.ToString("yyyy-MM-dd"), EndDate = endDate.ToString("yyyy-MM-dd") });
-
-            return c > 0;
-        }
     }
 
     private void OnPaintSurface(object sender, SKPaintSurfaceEventArgs e)
@@ -423,15 +401,12 @@ public partial class MainWindow : Window
         {
             if (_lastInsertedId != 0)
             {
-                await using (var connection = new SQLiteConnection($"Data Source={Path.Combine(_dataDir, "RunningLog.db")};Version=3;"))
+                var r = await _runningDataService.Delete(_lastInsertedId);
+                if (r)
                 {
-                    connection.Open();
-                    var runDataToDelete = new RunData { Id = _lastInsertedId };
-                    await connection.DeleteAsync(runDataToDelete);
                     SlideMessage.ShowMessage("成功删除最后添加的记录", MessageType.Success);
                     _lastInsertedId = 0; // 重置ID
                     _data = _runningDataService.LoadData(_year);
-
                     skElement.InvalidateVisual();
                 }
             }
@@ -582,11 +557,7 @@ public partial class MainWindow : Window
             Notes = notes
         };
 
-        using (var connection = new SQLiteConnection($"Data Source={Path.Combine(_dataDir, "RunningLog.db")};Version=3;"))
-        {
-            connection.Open();
-            _lastInsertedId = (int)connection.Insert(runData); // 返回新插入记录的ID
-        }
+        _lastInsertedId = _runningDataService.Save(runData);
 
         _year = selectedDate.Year;
         _data = _runningDataService.LoadData(_year);
@@ -646,7 +617,7 @@ public partial class MainWindow : Window
             if (child is Button button && int.TryParse(button.Content.ToString(), out int buttonYear))
             {
                 // 检查该年份是否有跑步数据
-                bool hasDataForYear =  DoesYearHasData(buttonYear);
+                bool hasDataForYear = _runningDataService.DoesYearHasData(buttonYear);
                 button.Visibility = hasDataForYear && buttonYear <= currentYear ? Visibility.Visible : Visibility.Collapsed;
             }
         }
