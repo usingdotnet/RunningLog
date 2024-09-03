@@ -490,8 +490,12 @@ public partial class MainWindow : Window
 
         // 其他字段可以为空
         double.TryParse(TxtHeartRate.Text, out heartRate);
-        var pt = TxtPace.Text.Split(".");
-        pace = $"{pt[0]}′{pt[1]}″";//6′46″
+        if (!string.IsNullOrEmpty(TxtPace.Text))
+        {
+            var pt = TxtPace.Text.Split(".");
+            pace = $"{pt[0]}′{pt[1]}″";//6′46″
+        }
+
         notes = TxtNotes.Text;
 
         return true;
