@@ -5,14 +5,22 @@ using Dapper.Contrib.Extensions;
 
 namespace RunningLog;
 
-internal class RunningDataService(string dataDir)
+internal class RunningDataService
 {
-    public string DataDir { get; set; } = dataDir;
+    public string DataDir { get; set; }
+
+    private readonly string _conStr;
+
+    public RunningDataService(string dataDir)
+    {
+        DataDir = dataDir;
+        string dbPath = Path.Combine(DataDir, "RunningLog.db");
+        _conStr = $"Data Source={dbPath};Version=3;";
+    }
 
     public Dictionary<DateTime, List<RunData>> LoadData(int year)
     {
-        string dbPath = Path.Combine(DataDir, "RunningLog.db");
-        using (var connection = new SQLiteConnection($"Data Source={dbPath};Version=3;"))
+        using (var connection = new SQLiteConnection(_conStr))
         {
             connection.Open();
             var startDate = new DateTime(year, 1, 1);
@@ -26,7 +34,7 @@ internal class RunningDataService(string dataDir)
 
     public int Save(RunData runData)
     {
-        using (var connection = new SQLiteConnection($"Data Source={Path.Combine(DataDir, "RunningLog.db")};Version=3;"))
+        using (var connection = new SQLiteConnection(_conStr))
         {
             connection.Open();
             var lastInsertedId = (int)connection.Insert(runData); // 返回新插入记录的ID
@@ -36,8 +44,7 @@ internal class RunningDataService(string dataDir)
 
     public bool DoesYearHasData(int year)
     {
-        string dbPath = Path.Combine(DataDir, "RunningLog.db");
-        using (var connection = new SQLiteConnection($"Data Source={dbPath};Version=3;"))
+        using (var connection = new SQLiteConnection(_conStr))
         {
             connection.Open();
             var startDate = new DateTime(year, 1, 1);
@@ -52,7 +59,7 @@ internal class RunningDataService(string dataDir)
 
     public async Task<bool> Delete(int lastInsertedId)
     {
-        await using (var connection = new SQLiteConnection($"Data Source={Path.Combine(DataDir, "RunningLog.db")};Version=3;"))
+        await using (var connection = new SQLiteConnection(_conStr))
         {
             connection.Open();
             var runDataToDelete = new RunData { Id = lastInsertedId };
