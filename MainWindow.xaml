@@ -103,7 +103,7 @@
                 <TextBox Name="TxtHeartRate" Width="50" Text="" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
 
                 <Label Content="备注：" VerticalAlignment="Center" Margin="5"/>
-                <TextBox Name="TxtNotes" Width="120" Text="上午森林公园跑步" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
+                <TextBox Name="TxtNotes" Width="100" Text="上午跑步" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
             </StackPanel>
             <StackPanel Grid.Column="0" Grid.Row="4" Orientation="Horizontal" Margin="5" Grid.ColumnSpan="2">
                 <Button Name="BtnOk" Content="添加" Margin="30,5,5,5" Width="60" Click="BtnOk_OnClick"/>
