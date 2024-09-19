@@ -35,7 +35,7 @@ public partial class MainWindow : Window
     private const int HeaderHeight = YearLabelHeight + 10;
     private AppConfig _config;
     private string ConfigFile = "config.toml";
-    private int _lastInsertedId = 0;
+    private int _lastInsertedId;
     private RunningDataService _runningDataService;
     private GitService _gitService;
 
@@ -74,6 +74,8 @@ public partial class MainWindow : Window
         _isDarkMode = _config.IsDarkMode;
         _repoDir = _config.RepoDir;
         _dataDir = Path.Combine(_repoDir, "data");
+        rbPlace1.Content = _config.Place1;
+        rbPlace2.Content = _config.Place2;
         _runningDataService = new RunningDataService(_dataDir);
         _gitService = new GitService(_repoDir);
     }
@@ -390,7 +392,6 @@ public partial class MainWindow : Window
         TxtDuration.Text = string.Empty;
         TxtHeartRate.Text = string.Empty;
         TxtPace.Text = string.Empty;
-        TxtNotes.Text = string.Empty;
     }
 
     private async void BtnRevert_OnClick(object sender, RoutedEventArgs e)
@@ -497,11 +498,54 @@ public partial class MainWindow : Window
             {
                 pace = $"{pt[0]}′{pt[1]}″"; //6′46″
             }
+            else if (pt.Length == 1)
+            {
+                pace = $"{pt[0]}′00″"; //6′00″
+            }
         }
 
-        notes = TxtNotes.Text;
+        notes = GetNote();
 
         return true;
+    }
+
+    private string GetNote()
+    {
+        string note = "";
+
+        // 时间
+        if (rbMorning.IsChecked ?? false)
+        {
+            note += rbMorning.Content;
+        }
+
+        if (rbAfternoon.IsChecked ?? false)
+        {
+            note += rbAfternoon.Content;
+        }
+
+        if (rbEvening.IsChecked ?? false)
+        {
+            note += rbEvening.Content;
+        }
+
+        // 地点
+        if (rbPlace1.IsChecked ?? false)
+        {
+            note += rbPlace1.Content;
+        }
+        else if (rbPlace2.IsChecked ?? false)
+        {
+            note += rbPlace2.Content;
+        }
+        else if (rbPlace3.IsChecked ?? false)
+        {
+            note += txtOtherPlace.Text;
+        }
+
+        note += "跑步";
+
+        return note;
     }
 
     private string ParseDuration(string durationString)
@@ -676,7 +720,7 @@ public partial class MainWindow : Window
         plt.YLabel("Distance (km)", 15);
         plt.Axes.SetLimitsY(0, monthlyDistances.Max() * 1.25);
         Tick[] ticks =
-        {
+        [
             new(1, "Jan"),
             new(2, "Feb"),
             new(3, "Mar"),
@@ -688,8 +732,8 @@ public partial class MainWindow : Window
             new(9, "Sep"),
             new(10, "Oct"),
             new(11, "Nov"),
-            new(12, "Dec"),
-        };
+            new(12, "Dec")
+        ];
 
         plt.Axes.Bottom.TickGenerator = new ScottPlot.TickGenerators.NumericManual(ticks);
         plt.Axes.Bottom.MajorTickStyle.Length = 0;
