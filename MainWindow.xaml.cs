@@ -36,13 +36,15 @@ public partial class MainWindow : Window
     private AppConfig _config;
     private string ConfigFile = "config.toml";
     private int _lastInsertedId;
-    private RunningDataService _runningDataService;
-    private GitService _gitService;
+    private readonly RunningDataService _runningDataService;
+    private readonly GitService _gitService;
 
     public MainWindow()
     {
         InitializeComponent();
         LoadConfig();
+        _runningDataService = new RunningDataService(_dataDir);
+        _gitService = new GitService(_repoDir);
         InitializeWindowPosition();
         _data = _runningDataService.LoadData(_year);
         UpdateYearButtonsVisibility();
@@ -76,8 +78,6 @@ public partial class MainWindow : Window
         _dataDir = Path.Combine(_repoDir, "data");
         rbPlace1.Content = _config.Place1;
         rbPlace2.Content = _config.Place2;
-        _runningDataService = new RunningDataService(_dataDir);
-        _gitService = new GitService(_repoDir);
     }
 
     private void SaveConfig()
