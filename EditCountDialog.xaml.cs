@@ -16,7 +16,7 @@ namespace RunningLog
 
         private void OnOkClick(object sender, RoutedEventArgs e)
         {
-            if (int.TryParse(CountTextBox.Text, out var count))
+            if (int.TryParse(CountTextBox.Text, out int count))
             {
                 NewCount = count;
                 DialogResult = true;
