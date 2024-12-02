@@ -392,6 +392,7 @@ public partial class MainWindow : Window
 
         fullLog = $"{time}{place}跑步 {duration}，{distance} 公里，平均配速 {pace}，平均心率 {heartRate}，最大摄氧量 {vo2Max}。";
         _logger.Debug(fullLog);
+
         // 添加成功后清空输入框
         TxtDistance.Text = string.Empty;
         TxtDuration.Text = string.Empty;
