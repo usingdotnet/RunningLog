@@ -13,9 +13,11 @@ public class RunData
 
     public string? Duration { get; set; }
 
+    public string? Pace { get; set; }
+
     public double HeartRate { get; set; }
 
-    public string? Pace { get; set; }
+    public string VO2Max { get; set; } = "";
 
     public string? Notes { get; set; }
 }

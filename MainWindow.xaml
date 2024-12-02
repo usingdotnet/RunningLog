@@ -118,12 +118,15 @@
                     <Label Content="心率：" VerticalAlignment="Center" Margin="5"/>
                     <TextBox Name="TxtHeartRate" Width="50" Text="" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
 
+                    <Label Content="最大摄氧量：" VerticalAlignment="Center" Margin="5"/>
+                    <TextBox Name="TxtVO2Max" Width="50" Text="" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
                 </StackPanel>
             </StackPanel>
             <StackPanel Grid.Column="0" Grid.Row="4" Orientation="Horizontal" Margin="5" Grid.ColumnSpan="2">
                 <Button Name="BtnOk" Content="添加" Margin="30,5,5,5" Width="60" Click="BtnOk_OnClick"/>
                 <Button Name="BtnRevert" Content="撤销" Margin="30,5,5,5" Width="60" Click="BtnRevert_OnClick"/>
                 <Button Name="BtnPublish" Content="发布" Margin="30,5,5,5" Width="60" Click="BtnPublish_OnClick"/>
+                <Button Name="BtnGenerateLog" Content="拷贝跑步日志" Margin="30,5,5,5" Width="90" Click="BtnGenerateLog_OnClick"/>
                 <Button Name="BtnOpen" Content="打开数据目录" Margin="30,5,5,5" Width="90" Click="BtnOpen_OnClick"/>
             </StackPanel>
         </Grid>
