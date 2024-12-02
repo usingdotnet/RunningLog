@@ -429,14 +429,14 @@ public partial class MainWindow : Window
 
     private async void BtnPublish_OnClick(object sender, RoutedEventArgs e)
     {
-        if (!_gitService.IsGitRepository())
-        {
-            ShowMessage("当前目录不是Git仓库。", MessageType.Error);
-            return;
-        }
-
         try
         {
+            if (!_gitService.IsGitRepository())
+            {
+                ShowMessage("当前目录不是Git仓库。", MessageType.Error);
+                return;
+            }
+
             // 检查是否有未提交的更改
             string status = await _gitService.GetGitStatus();
             bool hasChanges = !string.IsNullOrWhiteSpace(status);
