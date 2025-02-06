@@ -464,6 +464,7 @@ public partial class MainWindow : Window
         catch (Exception ex)
         {
             ShowMessage($"发布过程中出错: {ex.Message}", MessageType.Error);
+            _logger.Error(ex.Message);
         }
     }
 
