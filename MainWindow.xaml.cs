@@ -262,27 +262,27 @@ public partial class MainWindow : Window
     {
         var startDate = new DateTime(_year, 1, 1);
         int totalDays = DateTime.IsLeapYear(_year) ? 366 : 365;
-        int totalCols = (int)Math.Ceiling((totalDays + (int)GetChineseDayOfWeek(startDate.DayOfWeek)) / 7.0);
+        int startDayOffset = (int)GetChineseDayOfWeek(startDate.DayOfWeek);
+        int totalCols = (int)Math.Ceiling((totalDays + startDayOffset) / 7.0);
 
         for (int col = 0; col < totalCols; col++)
         {
             for (int row = 0; row < 7; row++)
             {
-                int index = col * 7 + row - (int)GetChineseDayOfWeek(startDate.DayOfWeek);
+                int index = col * 7 + row - startDayOffset;
                 if (index < 0 || index >= totalDays) continue;
 
                 var date = startDate.AddDays(index);
                 double totalDistance = _data.TryGetValue(date, out List<RunData> runs) ? runs.Sum(r => r.Distance) : 0;
 
                 SKColor color = GetDayColor(totalDistance);
-
                 labelPaint.Color = color;
 
                 var rect = new SKRect(
                     col * (CellSize + CellPadding) + LeftMargin,
-                    row * (CellSize + CellPadding) + HeaderHeight + LabelHeight + 20, // Increase spacing
+                    row * (CellSize + CellPadding) + HeaderHeight + LabelHeight + 20, // 增加间距
                     col * (CellSize + CellPadding) + CellSize + LeftMargin,
-                    row * (CellSize + CellPadding) + CellSize + HeaderHeight + LabelHeight + 20 // Increase spacing
+                    row * (CellSize + CellPadding) + CellSize + HeaderHeight + LabelHeight + 20 // 增加间距
                 );
 
                 canvas.DrawRect(rect, labelPaint);
