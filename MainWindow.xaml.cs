@@ -175,7 +175,6 @@ public partial class MainWindow : Window
         canvas.Clear(backgroundColor);
     }
 
-
     private float CalculateHeatmapBottom()
     {
         var startDate = new DateTime(_year, 1, 1);
@@ -183,7 +182,6 @@ public partial class MainWindow : Window
         int totalRows = 7; // 一周7天
         return HeaderHeight + LabelHeight + totalRows * (CellSize + CellPadding) + CellPadding;
     }
-
 
     private void DrawLegend(SKCanvas canvas)
     {
