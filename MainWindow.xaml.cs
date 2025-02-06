@@ -111,9 +111,9 @@ public partial class MainWindow : Window
     {
         var canvas = e.Surface.Canvas;
         DrawBackground(canvas);
-        DrawHeader(canvas);
+        DrawYear(canvas);
+        DrawTopRightInfo(canvas);
         DrawHeatmap(canvas);
-        DrawLastRunInfo(canvas);
         DrawLegend(canvas);
 
         // 绘制每月跑量图表
@@ -122,13 +122,7 @@ public partial class MainWindow : Window
         SavePng(e.Surface);
     }
 
-    private void DrawBackground(SKCanvas canvas)
-    {
-        var backgroundColor = _isDarkMode ? new SKColor(34, 34, 34) : SKColors.White;
-        canvas.Clear(backgroundColor);
-    }
-
-    private void DrawHeader(SKCanvas canvas)
+    private void DrawYear(SKCanvas canvas)
     {
         var textColor = _isDarkMode ? SKColors.White : new SKColor(34, 34, 34);
 
@@ -140,8 +134,16 @@ public partial class MainWindow : Window
         };
 
         var yearFont = new SKFont(SKTypeface.FromFamilyName("Microsoft YaHei", SKFontStyle.Bold), 20);
-        var statsFont = new SKFont(SKTypeface.FromFamilyName("Microsoft YaHei"), 16);
 
+        string yearText = $"{_year}";
+        canvas.DrawText(yearText, LeftMargin, YearLabelHeight - 5, yearFont, yearPaint);
+    }
+
+    private void DrawTopRightInfo(SKCanvas canvas)
+    {
+        var textColor = _isDarkMode ? SKColors.White : new SKColor(34, 34, 34);
+
+        var statsFont = new SKFont(SKTypeface.FromFamilyName("Microsoft YaHei"), 16);
         var statsPaint = new SKPaint
         {
             IsAntialias = true,
@@ -149,16 +151,30 @@ public partial class MainWindow : Window
             Color = textColor,
         };
 
-        string yearText = $"{_year}";
-        canvas.DrawText(yearText, LeftMargin, YearLabelHeight - 5, yearFont, yearPaint);
-
-        // Draw statistics
+        // 绘制统计信息
         int runningDays = _data.Count(entry => entry.Value.Sum(r => r.Distance) > 0);
         double totalDistance = _data.Values.SelectMany(distances => distances).Sum(r => r.Distance);
-        string statsText = $"{runningDays} days, {totalDistance:F2} km";
+        string statsText = $"{runningDays} days, {totalDistance:F2} k" +
+                           $"m";
         var statsTextWidth = statsFont.MeasureText(statsText);
-        canvas.DrawText(statsText, FixedWidth - statsTextWidth - 20, YearLabelHeight - 5,statsFont, statsPaint);
+        canvas.DrawText(statsText, FixedWidth - statsTextWidth - 20, YearLabelHeight - 5, statsFont, statsPaint);
+
+        // 绘制最后一次跑步信息
+        var lastRun = _data.OrderByDescending(x => x.Key).FirstOrDefault();
+        if (lastRun.Key != default)
+        {
+            string lastRunText = $"Last Run: {lastRun.Key.ToShortDateString()}, {lastRun.Value.Sum(r => r.Distance):F2} km";
+            var lastRunTextWidth = statsFont.MeasureText(lastRunText);
+            canvas.DrawText(lastRunText, FixedWidth - lastRunTextWidth - 20, YearLabelHeight + 20, statsFont, statsPaint);
+        }
     }
+
+    private void DrawBackground(SKCanvas canvas)
+    {
+        var backgroundColor = _isDarkMode ? new SKColor(34, 34, 34) : SKColors.White;
+        canvas.Clear(backgroundColor);
+    }
+
 
     private float CalculateHeatmapBottom()
     {
@@ -168,29 +184,6 @@ public partial class MainWindow : Window
         return HeaderHeight + LabelHeight + totalRows * (CellSize + CellPadding) + CellPadding;
     }
 
-    private void DrawLastRunInfo(SKCanvas canvas)
-    {
-        var textColor = _isDarkMode ? SKColors.White : new SKColor(34, 34, 34);
-
-        var lastRunPaint = new SKPaint
-        {
-            IsAntialias = true,
-            Style = SKPaintStyle.Fill,
-            //TextSize = 16,
-            //Typeface = SKTypeface.FromFamilyName("Microsoft YaHei"),
-            Color = textColor,
-        };
-
-        var lastRunFont = new SKFont(SKTypeface.FromFamilyName("Microsoft YaHei"), 16);
-        var lastRun = _data.OrderByDescending(x => x.Key).FirstOrDefault();
-        if (lastRun.Key != default)
-        {
-            string lastRunText = $"Last Run: {lastRun.Key.ToShortDateString()}, {lastRun.Value.Sum(r => r.Distance):F2} km";
-            var lastRunTextWidth = lastRunFont.MeasureText(lastRunText);
-            float statsTextY = YearLabelHeight - 5;
-            canvas.DrawText(lastRunText, FixedWidth - lastRunTextWidth - 20, statsTextY + 20, lastRunFont, lastRunPaint);
-        }
-    }
 
     private void DrawLegend(SKCanvas canvas)
     {
