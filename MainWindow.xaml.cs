@@ -153,7 +153,7 @@ public partial class MainWindow : Window
         string yearText = $"{_year}";
         canvas.DrawText(yearText, LeftMargin, YearLabelHeight - 5, yearPaint);
 
-        // 绘制统计信息
+        // Draw statistics
         int runningDays = _data.Count(entry => entry.Value.Sum(r => r.Distance) > 0);
         double totalDistance = _data.Values.SelectMany(distances => distances).Sum(r => r.Distance);
         string statsText = $"{runningDays} days, {totalDistance:F2} km";
@@ -185,16 +185,16 @@ public partial class MainWindow : Window
         var lastRun = _data.OrderByDescending(x => x.Key).FirstOrDefault();
         if (lastRun.Key != default)
         {
-            string lastRunText = $"Latest：{lastRun.Key.ToShortDateString()}, {lastRun.Value.Sum(r => r.Distance):F2} km";
+            string lastRunText = $"Last Run: {lastRun.Key.ToShortDateString()}, {lastRun.Value.Sum(r => r.Distance):F2} km";
             var lastRunTextWidth = lastRunPaint.MeasureText(lastRunText);
-            float heatmapBottom = CalculateHeatmapBottom();
-            canvas.DrawText(lastRunText, LeftMargin, heatmapBottom + 30, lastRunPaint);
+            float statsTextY = YearLabelHeight - 5;
+            canvas.DrawText(lastRunText, FixedWidth - lastRunTextWidth - 20, statsTextY + 20, lastRunPaint);
         }
     }
 
     private void DrawLegend(SKCanvas canvas)
     {
-        float legendY = CalculateHeatmapBottom() + 20; // 图例位置在热力图下方20像素
+        float legendY = CalculateHeatmapBottom() + 40; // 图例位置在热力图下方40像素
         float legendX = FixedWidth - 11 * CellSize - 60; // 左移40像素，为"10km"文字腾出空间
 
         var paint = new SKPaint
@@ -225,7 +225,7 @@ public partial class MainWindow : Window
 
         // 绘制图例文字
         canvas.DrawText("0 km", legendX + CellSize / 2 - textPaint.MeasureText("0km") / 2 - 2 * CellSize, legendY + CellSize / 2 + textOffsetY, textPaint);
-        canvas.DrawText("5 km", legendX + 6 * CellSize - textPaint.MeasureText("5km") / 2 + 4, legendY + CellSize + textOffsetY + textOffsetX, textPaint);
+        canvas.DrawText("5 km", legendX + 6 * CellSize - textPaint.MeasureText("5km") / 2 + 4, legendY + CellPadding + CellSize + textOffsetY + textOffsetX, textPaint);
         canvas.DrawText("10 km", legendX + 11 * CellSize + textOffsetX, legendY + CellSize / 2 + textOffsetY, textPaint);
     }
 
@@ -248,8 +248,7 @@ public partial class MainWindow : Window
     private void DrawMonthLabels(SKCanvas canvas, SKPaint labelPaint)
     {
         var startDate = new DateTime(_year, 1, 1);
-        string[] monthAbbreviations = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-        ];
+        string[] monthAbbreviations = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
 
         labelPaint.TextSize = 12;
 
@@ -260,8 +259,8 @@ public partial class MainWindow : Window
             int monthStartCol = daysBeforeMonth / 7;
             int monthOffsetX = monthStartCol * (CellSize + CellPadding) + LeftMargin;
 
-            // 调整Y坐标,使标签更靠近热力图
-            float yPosition = HeaderHeight + MonthLabelHeight + 5;
+            // Adjust Y position to add more space
+            float yPosition = HeaderHeight + MonthLabelHeight + 20; // Increase spacing
 
             canvas.DrawText(monthAbbreviations[month - 1], monthOffsetX, yPosition, labelPaint);
         }
@@ -289,9 +288,9 @@ public partial class MainWindow : Window
 
                 var rect = new SKRect(
                     col * (CellSize + CellPadding) + LeftMargin,
-                    row * (CellSize + CellPadding) + HeaderHeight + LabelHeight,
+                    row * (CellSize + CellPadding) + HeaderHeight + LabelHeight + 20, // Increase spacing
                     col * (CellSize + CellPadding) + CellSize + LeftMargin,
-                    row * (CellSize + CellPadding) + CellSize + HeaderHeight + LabelHeight
+                    row * (CellSize + CellPadding) + CellSize + HeaderHeight + LabelHeight + 20 // Increase spacing
                 );
 
                 canvas.DrawRect(rect, labelPaint);
@@ -325,7 +324,7 @@ public partial class MainWindow : Window
         // 生成PNG的代码
         string png = Path.Combine(_dataDir, $"{_year}.png");
         using var image = surface.Snapshot();
-        using var data = image.Encode(SKEncodedImageFormat.Png, 80);
+        using var data = image.Encode(SKEncodedImageFormat.Png, 100); // 提高编码质量到100
         using var stream = File.OpenWrite(png);
         data.SaveTo(stream);
     }

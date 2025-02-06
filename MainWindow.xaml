@@ -8,7 +8,7 @@
         xmlns:skia="clr-namespace:SkiaSharp.Views.WPF;assembly=SkiaSharp.Views.WPF"
         xmlns:sys="clr-namespace:System;assembly=System.Runtime" Loaded="MainWindow_OnLoaded"
         xmlns:ScottPlot="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF"
-        Title="跑步日志" Height="770" Width="940" FontSize="13">
+        Title="跑步日志" Height="810" Width="940" FontSize="13">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
