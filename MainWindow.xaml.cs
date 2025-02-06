@@ -136,29 +136,28 @@ public partial class MainWindow : Window
         {
             IsAntialias = true,
             Style = SKPaintStyle.Fill,
-            TextSize = 20,
-            Typeface = SKTypeface.FromFamilyName("Microsoft YaHei", SKFontStyle.Bold),
             Color = textColor
         };
+
+        var yearFont = new SKFont(SKTypeface.FromFamilyName("Microsoft YaHei", SKFontStyle.Bold), 20);
+        var statsFont = new SKFont(SKTypeface.FromFamilyName("Microsoft YaHei"), 16);
 
         var statsPaint = new SKPaint
         {
             IsAntialias = true,
             Style = SKPaintStyle.Fill,
-            TextSize = 16,
-            Typeface = SKTypeface.FromFamilyName("Microsoft YaHei"),
             Color = textColor,
         };
 
         string yearText = $"{_year}";
-        canvas.DrawText(yearText, LeftMargin, YearLabelHeight - 5, yearPaint);
+        canvas.DrawText(yearText, LeftMargin, YearLabelHeight - 5, yearFont, yearPaint);
 
         // Draw statistics
         int runningDays = _data.Count(entry => entry.Value.Sum(r => r.Distance) > 0);
         double totalDistance = _data.Values.SelectMany(distances => distances).Sum(r => r.Distance);
         string statsText = $"{runningDays} days, {totalDistance:F2} km";
-        var statsTextWidth = statsPaint.MeasureText(statsText);
-        canvas.DrawText(statsText, FixedWidth - statsTextWidth - 20, YearLabelHeight - 5, statsPaint);
+        var statsTextWidth = statsFont.MeasureText(statsText);
+        canvas.DrawText(statsText, FixedWidth - statsTextWidth - 20, YearLabelHeight - 5,statsFont, statsPaint);
     }
 
     private float CalculateHeatmapBottom()
@@ -177,18 +176,19 @@ public partial class MainWindow : Window
         {
             IsAntialias = true,
             Style = SKPaintStyle.Fill,
-            TextSize = 16,
-            Typeface = SKTypeface.FromFamilyName("Microsoft YaHei"),
+            //TextSize = 16,
+            //Typeface = SKTypeface.FromFamilyName("Microsoft YaHei"),
             Color = textColor,
         };
 
+        var lastRunFont = new SKFont(SKTypeface.FromFamilyName("Microsoft YaHei"), 16);
         var lastRun = _data.OrderByDescending(x => x.Key).FirstOrDefault();
         if (lastRun.Key != default)
         {
             string lastRunText = $"Last Run: {lastRun.Key.ToShortDateString()}, {lastRun.Value.Sum(r => r.Distance):F2} km";
-            var lastRunTextWidth = lastRunPaint.MeasureText(lastRunText);
+            var lastRunTextWidth = lastRunFont.MeasureText(lastRunText);
             float statsTextY = YearLabelHeight - 5;
-            canvas.DrawText(lastRunText, FixedWidth - lastRunTextWidth - 20, statsTextY + 20, lastRunPaint);
+            canvas.DrawText(lastRunText, FixedWidth - lastRunTextWidth - 20, statsTextY + 20, lastRunFont, lastRunPaint);
         }
     }
 
@@ -207,9 +207,10 @@ public partial class MainWindow : Window
         {
             IsAntialias = true,
             Color = _isDarkMode ? SKColors.White : SKColors.Black,
-            TextSize = 12,
-            Typeface = SKTypeface.FromFamilyName("Microsoft YaHei")
+            //TextSize = 12,
+            //Typeface = SKTypeface.FromFamilyName("Microsoft YaHei")
         };
+        var font = new SKFont(SKTypeface.FromFamilyName("Microsoft YaHei"), 12);
 
         for (int i = 0; i <= 10; i++)
         {
@@ -220,13 +221,13 @@ public partial class MainWindow : Window
             canvas.DrawRect(new SKRect(x, legendY, x + CellSize, legendY + CellSize), paint);
         }
 
-        float textOffsetY = textPaint.TextSize / 2;
+        float textOffsetY = font.Size / 2;
         float textOffsetX = 5;
 
         // 绘制图例文字
-        canvas.DrawText("0 km", legendX + CellSize / 2 - textPaint.MeasureText("0km") / 2 - 2 * CellSize, legendY + CellSize / 2 + textOffsetY, textPaint);
-        canvas.DrawText("5 km", legendX + 6 * CellSize - textPaint.MeasureText("5km") / 2 + 4, legendY + CellPadding + CellSize + textOffsetY + textOffsetX, textPaint);
-        canvas.DrawText("10 km", legendX + 11 * CellSize + textOffsetX, legendY + CellSize / 2 + textOffsetY, textPaint);
+        canvas.DrawText("0 km", legendX + CellSize / 2 - font.MeasureText("0km") / 2 - 2 * CellSize, legendY + CellSize / 2 + textOffsetY,font, textPaint);
+        canvas.DrawText("5 km", legendX + 6 * CellSize - font.MeasureText("5km") / 2 + 4, legendY + CellPadding + CellSize + textOffsetY + textOffsetX,font, textPaint);
+        canvas.DrawText("10 km", legendX + 11 * CellSize + textOffsetX, legendY + CellSize / 2 + textOffsetY,font, textPaint);
     }
 
     private void DrawHeatmap(SKCanvas canvas)
@@ -237,7 +238,7 @@ public partial class MainWindow : Window
         {
             IsAntialias = true,
             Style = SKPaintStyle.Fill,
-            Typeface = SKTypeface.FromFamilyName("Microsoft YaHei"),
+            //Typeface = SKTypeface.FromFamilyName("Microsoft YaHei"),
             Color = textColor
         };
 
@@ -250,19 +251,19 @@ public partial class MainWindow : Window
         var startDate = new DateTime(_year, 1, 1);
         string[] monthAbbreviations = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
 
-        labelPaint.TextSize = 12;
+        var font = new SKFont(SKTypeface.FromFamilyName("Microsoft YaHei"), 12);
 
         for (int month = 1; month <= 12; month++)
         {
             var monthStart = new DateTime(_year, month, 1);
             int daysBeforeMonth = (monthStart - startDate).Days;
-            int monthStartCol = daysBeforeMonth / 7;
+            int monthStartCol = (daysBeforeMonth + (int)GetChineseDayOfWeek(startDate.DayOfWeek)) / 7;
             int monthOffsetX = monthStartCol * (CellSize + CellPadding) + LeftMargin;
 
             // Adjust Y position to add more space
             float yPosition = HeaderHeight + MonthLabelHeight + 20; // Increase spacing
 
-            canvas.DrawText(monthAbbreviations[month - 1], monthOffsetX, yPosition, labelPaint);
+            canvas.DrawText(monthAbbreviations[month - 1], monthOffsetX, yPosition, font, labelPaint);
         }
     }
 
