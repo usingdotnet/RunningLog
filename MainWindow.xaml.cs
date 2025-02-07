@@ -244,7 +244,7 @@ public partial class MainWindow : Window
     private void DrawMonthLabels(SKCanvas canvas, SKPaint labelPaint)
     {
         var startDate = new DateTime(_year, 1, 1);
-        string[] monthAbbreviations = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+        string[] monthAbbreviations = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
         var font = new SKFont(SKTypeface.FromFamilyName("Microsoft YaHei"), 12);
 
