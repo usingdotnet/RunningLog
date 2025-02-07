@@ -33,14 +33,14 @@ public partial class MainWindow : Window
     private const int MonthLabelHeight = 20;
     private const int YearLabelHeight = 30;
     private const int HeaderHeight = YearLabelHeight + 10;
-    private AppConfig _config;
-    private string ConfigFile = "config.toml";
+    private AppConfig _config = new AppConfig();
+    private string _configFile = "config.toml";
     private int _lastInsertedId;
     private readonly RunningDataService _runningDataService;
     private readonly GitService _gitService;
-    private string time = "";
-    private string place = "";
-    private string fullLog = "";
+    private string _time = "";
+    private string _place = "";
+    private string _fullLog = "";
 
     public MainWindow()
     {
@@ -62,12 +62,12 @@ public partial class MainWindow : Window
     private void LoadConfig()
     {
         string exePath = Assembly.GetExecutingAssembly().Location;
-        string exeDirectory = Path.GetDirectoryName(exePath);
-        ConfigFile = Path.Combine(exeDirectory, ConfigFile);
-        if (File.Exists(ConfigFile))
+        string exeDirectory = Path.GetDirectoryName(exePath) ?? throw new InvalidOperationException("无法获取可执行文件的目录。");
+        _configFile = Path.Combine(exeDirectory, _configFile);
+        if (File.Exists(_configFile))
         {
-            _logger.Debug($"配置文件 {ConfigFile}");
-            string tomlString = File.ReadAllText(ConfigFile);
+            _logger.Debug($"配置文件 {_configFile}");
+            string tomlString = File.ReadAllText(_configFile);
             _config = TomletMain.To<AppConfig>(tomlString);
         }
         else
@@ -87,7 +87,7 @@ public partial class MainWindow : Window
     {
         _config.IsDarkMode = _isDarkMode;
         string tomlString = TomletMain.TomlStringFrom(_config);
-        File.WriteAllText(ConfigFile, tomlString);
+        File.WriteAllText(_configFile, tomlString);
     }
 
     private void SetGitRelatedButtonsVisibility()
@@ -158,7 +158,7 @@ public partial class MainWindow : Window
         int runningDays = _data.Count(entry => entry.Value.Sum(r => r.Distance) > 0);
         double totalDistance = _data.Values.SelectMany(distances => distances).Sum(r => r.Distance);
         string statsTextContent = $"{runningDays} days, {totalDistance:F2} km";
-        string statsText = $"{t,-10}{statsTextContent,20}";
+        string statsText = $"{t,10}{statsTextContent,20}";
         var statsTextWidth = font.MeasureText(statsText);
         canvas.DrawText(statsText, FixedWidth - statsTextWidth - 20, YearLabelHeight - 5, font, statsPaint);
 
@@ -167,7 +167,7 @@ public partial class MainWindow : Window
         if (lastRun.Key != default)
         {
             string lastRunContent = $"{lastRun.Key:yyyy/MM/dd}, {lastRun.Value.Sum(r => r.Distance):F2} km";
-            string lastRunText = $"{lr,-10}{lastRunContent,20}";
+            string lastRunText = $"{lr,10}{lastRunContent,20}";
             var lastRunTextWidth = font.MeasureText(lastRunText);
             canvas.DrawText(lastRunText, FixedWidth - lastRunTextWidth - 20, YearLabelHeight + 20, font, statsPaint);
         }
@@ -277,7 +277,7 @@ public partial class MainWindow : Window
                 if (index < 0 || index >= totalDays) continue;
 
                 var date = startDate.AddDays(index);
-                double totalDistance = _data.TryGetValue(date, out List<RunData> runs) ? runs.Sum(r => r.Distance) : 0;
+                double totalDistance = _data.TryGetValue(date, out List<RunData>? runs) ? runs.Sum(r => r.Distance) : 0;
 
                 SKColor color = GetDayColor(totalDistance);
                 labelPaint.Color = color;
@@ -385,8 +385,8 @@ public partial class MainWindow : Window
         _lastInsertedId = UpdateDataAndSave(selectedDate, distance, duration, heartRate, pace, vo2Max, notes);
         ShowMessage("添加完成。", MessageType.Success);
 
-        fullLog = $"{time}{place}跑步 {duration}，{distance} 公里，平均配速 {pace}，平均心率 {heartRate}，最大摄氧量 {vo2Max}。";
-        _logger.Debug(fullLog);
+        _fullLog = $"{_time}{_place}跑步 {duration}，{distance} 公里，平均配速 {pace}，平均心率 {heartRate}，最大摄氧量 {vo2Max}。";
+        _logger.Debug(_fullLog);
 
         // 添加成功后清空输入框
         TxtDistance.Text = string.Empty;
@@ -474,7 +474,7 @@ public partial class MainWindow : Window
 
     private void BtnGenerateLog_OnClick(object sender, RoutedEventArgs e)
     {
-        Clipboard.SetText(fullLog);
+        Clipboard.SetText(_fullLog);
     }
 
     private bool ValidateInput(out DateTime selectedDate, out double distance, out string duration, out string pace, out double heartRate, out string vo2max, out string notes)
@@ -526,36 +526,36 @@ public partial class MainWindow : Window
         // 时间
         if (rbMorning.IsChecked ?? false)
         {
-            time = rbMorning.Content.ToString();
+            _time = rbMorning.Content?.ToString() ?? string.Empty;
         }
 
         if (rbAfternoon.IsChecked ?? false)
         {
-            time = rbAfternoon.Content.ToString();
+            _time = rbAfternoon.Content?.ToString() ?? string.Empty;
         }
 
         if (rbEvening.IsChecked ?? false)
         {
-            time = rbEvening.Content.ToString();
+            _time = rbEvening.Content?.ToString() ?? string.Empty;
         }
 
-        note += time;
+        note += _time;
 
         // 地点
         if (rbPlace1.IsChecked ?? false)
         {
-            place = rbPlace1.Content.ToString();
+            _place = rbPlace1.Content?.ToString() ?? string.Empty;
         }
         else if (rbPlace2.IsChecked ?? false)
         {
-            place = rbPlace2.Content.ToString();
+            _place = rbPlace2.Content?.ToString() ?? string.Empty;
         }
         else if (rbPlace3.IsChecked ?? false)
         {
-            place= txtOtherPlace.Text.ToString();
+            _place = txtOtherPlace.Text?.ToString() ?? string.Empty;
         }
 
-        note += place;
+        note += _place;
         note += "跑步";
 
         return note;
@@ -641,7 +641,7 @@ public partial class MainWindow : Window
     private void LogDistanceChange(DateTime selectedDate, double distance)
     {
         var d = selectedDate.ToString("yyyy-MM-dd");
-        if (_data.TryGetValue(selectedDate, out List<RunData> values))
+        if (_data.TryGetValue(selectedDate, out List<RunData>? values))
         {
             _logger.Debug($"日期 {d} 的距离由 {string.Join(", ", values.Select(r => r.Distance))} 添加了 {distance}");
         }
