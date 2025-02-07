@@ -143,7 +143,7 @@ public partial class MainWindow : Window
     {
         var textColor = _isDarkMode ? SKColors.White : new SKColor(34, 34, 34);
 
-        var statsFont = new SKFont(SKTypeface.FromFamilyName("Microsoft YaHei"), 16);
+        var font = new SKFont(SKTypeface.FromFamilyName("Consolas"), 16);
         var statsPaint = new SKPaint
         {
             IsAntialias = true,
@@ -151,21 +151,25 @@ public partial class MainWindow : Window
             Color = textColor,
         };
 
+        var lr = "Last Run: ";
+        var t = "Total: ";
+
         // 绘制统计信息
         int runningDays = _data.Count(entry => entry.Value.Sum(r => r.Distance) > 0);
         double totalDistance = _data.Values.SelectMany(distances => distances).Sum(r => r.Distance);
-        string statsText = $"{runningDays} days, {totalDistance:F2} k" +
-                           $"m";
-        var statsTextWidth = statsFont.MeasureText(statsText);
-        canvas.DrawText(statsText, FixedWidth - statsTextWidth - 20, YearLabelHeight - 5, statsFont, statsPaint);
+        string statsTextContent = $"{runningDays} days, {totalDistance:F2} km";
+        string statsText = $"{t,-10}{statsTextContent,20}";
+        var statsTextWidth = font.MeasureText(statsText);
+        canvas.DrawText(statsText, FixedWidth - statsTextWidth - 20, YearLabelHeight - 5, font, statsPaint);
 
         // 绘制最后一次跑步信息
         var lastRun = _data.OrderByDescending(x => x.Key).FirstOrDefault();
         if (lastRun.Key != default)
         {
-            string lastRunText = $"Last Run: {lastRun.Key.ToShortDateString()}, {lastRun.Value.Sum(r => r.Distance):F2} km";
-            var lastRunTextWidth = statsFont.MeasureText(lastRunText);
-            canvas.DrawText(lastRunText, FixedWidth - lastRunTextWidth - 20, YearLabelHeight + 20, statsFont, statsPaint);
+            string lastRunContent = $"{lastRun.Key:yyyy/MM/dd}, {lastRun.Value.Sum(r => r.Distance):F2} km";
+            string lastRunText = $"{lr,-10}{lastRunContent,20}";
+            var lastRunTextWidth = font.MeasureText(lastRunText);
+            canvas.DrawText(lastRunText, FixedWidth - lastRunTextWidth - 20, YearLabelHeight + 20, font, statsPaint);
         }
     }
 
