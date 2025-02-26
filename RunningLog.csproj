@@ -17,7 +17,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="CliWrap" Version="3.7.*" />
+        <PackageReference Include="CliWrap" Version="3.8.*" />
         <PackageReference Include="NLog" Version="5.4.*" />
         <PackageReference Include="Samboy063.Tomlet" Version="6.0.*" />
         <PackageReference Include="ScottPlot.WPF" Version="5.0.*" />
