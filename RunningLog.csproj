@@ -1,27 +1,29 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net9.0-windows</TargetFramework>
-    <LangVersion>preview</LangVersion>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <UseWPF>true</UseWPF>
-    <ApplicationIcon>running.ico</ApplicationIcon>
-  </PropertyGroup>
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net10.0-windows</TargetFramework>
+        <LangVersion>preview</LangVersion>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <UseWPF>true</UseWPF>
+        <ApplicationIcon>running.ico</ApplicationIcon>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 
- <ItemGroup>
-    <Content Include="running.ico" />
-  </ItemGroup>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="CliWrap" Version="3.7.*" />
-    <PackageReference Include="NLog" Version="5.4.*" />
-    <PackageReference Include="Samboy063.Tomlet" Version="6.0.*" />
-    <PackageReference Include="ScottPlot.WPF" Version="5.0.*" />
-    <PackageReference Include="SkiaSharp.Views.WPF" Version="3.116.*" />
-    <PackageReference Include="System.Data.SQLite.Core" Version="1.0.*" />
-    <PackageReference Include="Dapper.Contrib" Version="2.0.*" />
-  </ItemGroup>
+    <ItemGroup>
+        <Content Include="running.ico" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="CliWrap" Version="3.7.*" />
+        <PackageReference Include="NLog" Version="5.4.*" />
+        <PackageReference Include="Samboy063.Tomlet" Version="6.0.*" />
+        <PackageReference Include="ScottPlot.WPF" Version="5.0.*" />
+        <PackageReference Include="SkiaSharp.Views.WPF" Version="3.116.*" />
+        <PackageReference Include="System.Data.SQLite.Core" Version="1.0.*" />
+        <PackageReference Include="Dapper.Contrib" Version="2.0.*" />
+    </ItemGroup>
 
 </Project>
