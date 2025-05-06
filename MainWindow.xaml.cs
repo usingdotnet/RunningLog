@@ -1,13 +1,14 @@
-﻿using SkiaSharp;
+﻿using NLog;
+using ScottPlot;
+using SkiaSharp;
 using SkiaSharp.Views.Desktop;
+using System.Diagnostics;
 using System.IO;
+using System.Reflection;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
-using NLog;
 using Tomlet;
-using System.Diagnostics;
-using System.Reflection;
-using ScottPlot;
 
 namespace RunningLog;
 
@@ -284,9 +285,9 @@ public partial class MainWindow : Window
 
                 var rect = new SKRect(
                     col * (CellSize + CellPadding) + LeftMargin,
-                    row * (CellSize + CellPadding) + HeaderHeight + LabelHeight + 20, // 增加间距
+                    row * (CellSize + CellPadding) + HeaderHeight + LabelHeight + 20,
                     col * (CellSize + CellPadding) + CellSize + LeftMargin,
-                    row * (CellSize + CellPadding) + CellSize + HeaderHeight + LabelHeight + 20 // 增加间距
+                    row * (CellSize + CellPadding) + CellSize + HeaderHeight + LabelHeight + 20
                 );
 
                 canvas.DrawRect(rect, labelPaint);
