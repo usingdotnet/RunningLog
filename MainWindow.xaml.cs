@@ -332,16 +332,49 @@ public partial class MainWindow : Window
             return _isDarkMode ? new SKColor(68, 68, 68) : SKColors.LightGray;
         }
 
-        distance = Math.Clamp(distance, 1.0, 10.0);
-        double normalizedDistance = Math.Pow((distance - 1.0) / 9.0, 0.9);
+        distance = Math.Clamp(distance, 1.0, ColorRanges.MaxDistance);
 
-        SKColor startColor = new SKColor(255, 255, 0);  // 黄色
-        SKColor endColor = new SKColor(255, 0, 0);      // 红色
+        return distance switch
+        {
+            <= ColorRanges.VeryShortDistance => InterpolateColor(
+                ColorRanges.FrostColor,
+                ColorRanges.ColdColor,
+                (distance - 1.0) / 1.0),
 
+            <= ColorRanges.ShortDistance => InterpolateColor(
+                ColorRanges.ColdColor,
+                ColorRanges.MildColor,
+                (distance - ColorRanges.VeryShortDistance) / 1.5),
+
+            <= ColorRanges.MediumDistance => InterpolateColor(
+                ColorRanges.MildColor,
+                ColorRanges.WarmColor,
+                (distance - ColorRanges.ShortDistance) / 1.5),
+
+            <= ColorRanges.MediumLongDistance => InterpolateColor(
+                ColorRanges.WarmColor,
+                ColorRanges.HotColor,
+                (distance - ColorRanges.MediumDistance) / 1.5),
+
+            <= ColorRanges.LongDistance => InterpolateColor(
+                ColorRanges.HotColor,
+                ColorRanges.IntenseColor,
+                (distance - ColorRanges.MediumLongDistance) / 1.5),
+
+            _ => InterpolateColor(
+                ColorRanges.IntenseColor,
+                ColorRanges.ExtremeColor,
+                (distance - ColorRanges.LongDistance) / 2.0)
+        };
+    }
+
+    private static SKColor InterpolateColor(SKColor start, SKColor end, double t)
+    {
+        t = Math.Clamp(t, 0, 1);
         return new SKColor(
-            (byte)(startColor.Red + (endColor.Red - startColor.Red) * normalizedDistance),
-            (byte)(startColor.Green + (endColor.Green - startColor.Green) * normalizedDistance),
-            (byte)(startColor.Blue + (endColor.Blue - startColor.Blue) * normalizedDistance)
+            (byte)(start.Red + (end.Red - start.Red) * t),
+            (byte)(start.Green + (end.Green - start.Green) * t),
+            (byte)(start.Blue + (end.Blue - start.Blue) * t)
         );
     }
 
@@ -754,4 +787,24 @@ public partial class MainWindow : Window
         WpfPlot1.Plot.Font.Automatic();
         WpfPlot1.Refresh();
     }
+}
+
+public static class ColorRanges
+{
+    // 距离分段更细致
+    public const double VeryShortDistance = 2.0;   // 极短距离
+    public const double ShortDistance = 3.5;       // 短距离
+    public const double MediumDistance = 5.0;      // 中距离
+    public const double MediumLongDistance = 6.5;  // 中长距离
+    public const double LongDistance = 8.0;        // 长距离
+    public const double MaxDistance = 10.0;        // 最大距离
+
+    // 更丰富的颜色过渡
+    public static readonly SKColor FrostColor = new(150, 220, 255);   // 霜蓝色 (1-2km)
+    public static readonly SKColor ColdColor = new(100, 200, 255);    // 浅蓝色 (2-3.5km)
+    public static readonly SKColor MildColor = new(144, 238, 144);    // 浅绿色 (3.5-5km)
+    public static readonly SKColor WarmColor = new(255, 238, 0);      // 黄色   (5-6.5km)
+    public static readonly SKColor HotColor = new(255, 160, 0);       // 橙色   (6.5-8km)
+    public static readonly SKColor IntenseColor = new(255, 80, 0);    // 深橙色 (8-9km)
+    public static readonly SKColor ExtremeColor = new(200, 0, 100);   // 紫色   (9-10km)
 }
