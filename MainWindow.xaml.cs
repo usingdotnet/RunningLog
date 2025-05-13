@@ -34,7 +34,7 @@ public partial class MainWindow : Window
     private const int MonthLabelHeight = 20;
     private const int YearLabelHeight = 30;
     private const int HeaderHeight = YearLabelHeight + 10;
-    private AppConfig _config = new AppConfig();
+    private AppConfig _config = new();
     private string _configFile = "config.toml";
     private int _lastInsertedId;
     private readonly RunningDataService _runningDataService;
@@ -62,9 +62,8 @@ public partial class MainWindow : Window
 
     private void LoadConfig()
     {
-        string exePath = Assembly.GetExecutingAssembly().Location;
-        string exeDirectory = Path.GetDirectoryName(exePath) ?? throw new InvalidOperationException("无法获取可执行文件的目录。");
-        _configFile = Path.Combine(exeDirectory, _configFile);
+        string dir = AppContext.BaseDirectory;
+        _configFile = Path.Combine(dir, _configFile);
         if (File.Exists(_configFile))
         {
             _logger.Debug($"配置文件 {_configFile}");
