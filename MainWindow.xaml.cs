@@ -585,7 +585,7 @@ public partial class MainWindow : Window
         }
         else if (rbPlace3.IsChecked ?? false)
         {
-            _place = txtOtherPlace.Text?.ToString() ?? string.Empty;
+            _place = txtOtherPlace.Text ?? string.Empty;
         }
 
         note += _place;
