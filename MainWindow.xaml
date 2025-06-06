@@ -92,8 +92,8 @@
                     <DatePicker DisplayDate="" CalendarStyle="{StaticResource styleCalendar}" SelectedDate="{x:Static sys:DateTime.Now}" 
                             VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Name="DpDate" Margin="5"/>
                     <StackPanel Orientation="Horizontal">
-                        <RadioButton Name="rbMorning"  Content="上午" Margin="5" VerticalAlignment="Center" VerticalContentAlignment="Center"/>
-                        <RadioButton Name="rbAfternoon"  Content="下午" Margin="5" IsChecked="True" VerticalAlignment="Center"/>
+                        <RadioButton Name="rbMorning"  Content="上午" Margin="5" IsChecked="True" VerticalAlignment="Center" VerticalContentAlignment="Center"/>
+                        <RadioButton Name="rbAfternoon"  Content="下午" Margin="5" VerticalAlignment="Center"/>
                         <RadioButton Name="rbEvening"  Content="晚上" Margin="5" VerticalAlignment="Center"/>
                     </StackPanel>
                     <Label Content="地点：" VerticalAlignment="Center" Margin="5"/>
