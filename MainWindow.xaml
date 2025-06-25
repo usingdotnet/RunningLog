@@ -119,7 +119,11 @@
                     <TextBox Name="TxtHeartRate" Width="50" Text="" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
 
                     <Label Content="最大摄氧量：" VerticalAlignment="Center" Margin="5"/>
-                    <TextBox Name="TxtVO2Max" Width="50" Text="" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
+                    <TextBox Name="TxtVO2Max" Width="50" Text="47" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
+
+                    <Label Content="步频：" VerticalAlignment="Center" Margin="5"/>
+                    <TextBox Name="TxtCadence" Width="50" Text="175" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
+
                 </StackPanel>
             </StackPanel>
             <StackPanel Grid.Column="0" Grid.Row="4" Orientation="Horizontal" Margin="5" Grid.ColumnSpan="2">

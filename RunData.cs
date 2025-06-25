@@ -20,4 +20,6 @@ public class RunData
     public string VO2Max { get; set; } = "";
 
     public string? Notes { get; set; }
+
+    public int Cadence { get; set; }
 }
