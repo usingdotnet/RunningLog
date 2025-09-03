@@ -38,6 +38,14 @@ internal class RunningDataService
         return records;
     }
 
+    public List<YearlyRunningRecord> GetYearlyRunningRecords()
+    {
+        using var connection = new SQLiteConnection(_conStr);
+        connection.Open();
+        var records = connection.Query<YearlyRunningRecord>("SELECT * FROM '按年累计统计' ORDER BY Year").ToList();
+        return records;
+    }
+
     public int Save(RunData runData)
     {
         using var connection = new SQLiteConnection(_conStr);

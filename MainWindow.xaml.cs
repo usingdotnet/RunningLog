@@ -791,21 +791,21 @@ public partial class MainWindow : Window
 
         // 绘制每月累计跑量折线图
         var monthlyRecords = _runningDataService.GetMonthlyRunningRecords();
-        Plot myPlot = new();
+        Plot plt1 = new();
 
         DateTime[] dates = monthlyRecords
             .Select(r => DateTime.ParseExact(r.Month, "yyyy-MM", null))
             .ToArray(); 
         double[] ys = monthlyRecords.Select(r => r.CumulativeDistance).ToArray();
-        myPlot.Add.Scatter(dates, ys);
-        myPlot.Axes.DateTimeTicksBottom();
-        myPlot.Title("Cumulative Running Distance Trend", 15);
-        myPlot.YLabel("Distance (km)", 13);
-        myPlot.XLabel("Time", 13);
+        plt1.Add.Scatter(dates, ys);
+        plt1.Axes.DateTimeTicksBottom();
+        plt1.Title("Cumulative Running Distance Trend By Month", 15);
+        plt1.YLabel("Distance (km)", 13);
+        plt1.XLabel("Time", 13);
 
-        myPlot.RenderManager.RenderStarting += (s, e) =>
+        plt1.RenderManager.RenderStarting += (s, e) =>
         {
-            Tick[] ticks1 = myPlot.Axes.Bottom.TickGenerator.Ticks;
+            Tick[] ticks1 = plt1.Axes.Bottom.TickGenerator.Ticks;
             for (int i = 0; i < ticks1.Length; i++)
             {
                 DateTime dt = DateTime.FromOADate(ticks1[i].Position);
@@ -814,9 +814,35 @@ public partial class MainWindow : Window
             }
         };
 
-        myPlot.Font.Automatic();
-        string png = Path.Combine(_dataDir, $"CumulativeTrend.png");
-        myPlot.SavePng(png, 790, 240);
+        plt1.Font.Automatic();
+        string png = Path.Combine(_dataDir, $"CumulativeTrendByMonth.png");
+        plt1.SavePng(png, 790, 240);
+
+        // 绘制每年累计跑量折线图
+        var yearlyRecords = _runningDataService.GetYearlyRunningRecords();
+        Plot plt2 = new();
+        plt2.Title("Cumulative Running Distance Trend By Year", 15);
+        plt2.YLabel("Distance (km)", 13);
+        plt2.XLabel("Year", 13);
+
+        // create sample data
+        int[] dataX = yearlyRecords.Select(x => x.Year).ToArray();
+        double[] dataY = yearlyRecords.Select(x => x.CumulativeDistance).ToArray();
+
+        ScottPlot.TickGenerators.NumericAutomatic tickGenX = new();
+        tickGenX.TargetTickCount = dataX.Length;
+        plt2.Axes.Bottom.TickGenerator = tickGenX;
+
+        // use manually defined ticks
+        double[] tickPositions = { 0,250,500,750, 1000,1250, 1500,1750,2000,2250,2500,2750,3000 };
+        string[] tickLabels = tickPositions.Select(x => x.ToString()).ToArray();
+        plt2.Axes.Left.SetTicks(tickPositions, tickLabels);
+
+        plt2.Add.Scatter(dataX, dataY);
+
+        plt2.Font.Automatic();
+        string png1 = Path.Combine(_dataDir, $"CumulativeTrendByYear.png");
+        plt2.SavePng(png1, 790, 240);
     }
 }
 
