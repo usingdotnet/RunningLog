@@ -30,6 +30,14 @@ internal class RunningDataService
         return data;
     }
 
+    public List<MonthlyRunningRecord> GetMonthlyRunningRecords()
+    {
+        using var connection = new SQLiteConnection(_conStr);
+        connection.Open();
+        var records = connection.Query<MonthlyRunningRecord>("SELECT * FROM '按月累计统计' ORDER BY Month").ToList();
+        return records;
+    }
+
     public int Save(RunData runData)
     {
         using var connection = new SQLiteConnection(_conStr);

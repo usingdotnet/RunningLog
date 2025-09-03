@@ -57,7 +57,6 @@ public partial class MainWindow : Window
 
     private void MainWindow_OnLoaded(object sender, RoutedEventArgs e)
     {
-
     }
 
     private void LoadConfig()
@@ -789,6 +788,35 @@ public partial class MainWindow : Window
         plt.Axes.Bottom.MajorTickStyle.Length = 0;
         WpfPlot1.Plot.Font.Automatic();
         WpfPlot1.Refresh();
+
+        // 绘制每月累计跑量折线图
+        var monthlyRecords = _runningDataService.GetMonthlyRunningRecords();
+        Plot myPlot = new();
+
+        DateTime[] dates = monthlyRecords
+            .Select(r => DateTime.ParseExact(r.Month, "yyyy-MM", null))
+            .ToArray(); 
+        double[] ys = monthlyRecords.Select(r => r.CumulativeDistance).ToArray();
+        myPlot.Add.Scatter(dates, ys);
+        myPlot.Axes.DateTimeTicksBottom();
+        myPlot.Title("Cumulative Running Distance Trend", 15);
+        myPlot.YLabel("Distance (km)", 13);
+        myPlot.XLabel("Time", 13);
+
+        myPlot.RenderManager.RenderStarting += (s, e) =>
+        {
+            Tick[] ticks1 = myPlot.Axes.Bottom.TickGenerator.Ticks;
+            for (int i = 0; i < ticks1.Length; i++)
+            {
+                DateTime dt = DateTime.FromOADate(ticks1[i].Position);
+                string label = $"{dt:yyMM}";
+                ticks1[i] = new Tick(ticks1[i].Position, label);
+            }
+        };
+
+        myPlot.Font.Automatic();
+        string png = Path.Combine(_dataDir, $"CumulativeTrend.png");
+        myPlot.SavePng(png, 790, 240);
     }
 }
 
