@@ -18,7 +18,7 @@ internal class RunningDataService
         _conStr = $"Data Source={dbPath};Version=3;";
     }
 
-    public Dictionary<DateTime, List<RunData>> LoadData(int year)
+    public Dictionary<DateTime, List<RunData>> LoadDataOfYear(int year)
     {
         using var connection = new SQLiteConnection(_conStr);
         connection.Open();

@@ -50,7 +50,7 @@ public partial class MainWindow : Window
         _runningDataService = new RunningDataService(_dataDir);
         _gitService = new GitService(_repoDir);
         InitializeWindowPosition();
-        _data = _runningDataService.LoadData(_year);
+        _data = _runningDataService.LoadDataOfYear(_year);
         UpdateYearButtonsVisibility();
         SetGitRelatedButtonsVisibility();
     }
@@ -386,7 +386,7 @@ public partial class MainWindow : Window
         if (e.OriginalSource is Button button && int.TryParse(button.Content.ToString(), out int year))
         {
             _year = year;
-            _data = _runningDataService.LoadData(_year);
+            _data = _runningDataService.LoadDataOfYear(_year);
 
             skElement.InvalidateVisual();
             UpdateYearButtonsVisibility();
@@ -440,7 +440,7 @@ public partial class MainWindow : Window
                 {
                     SlideMessage.ShowMessage("成功删除最后添加的记录", MessageType.Success);
                     _lastInsertedId = 0; // 重置ID
-                    _data = _runningDataService.LoadData(_year);
+                    _data = _runningDataService.LoadDataOfYear(_year);
                     skElement.InvalidateVisual();
                 }
             }
@@ -668,7 +668,7 @@ public partial class MainWindow : Window
         _lastInsertedId = _runningDataService.Save(runData);
 
         _year = selectedDate.Year;
-        _data = _runningDataService.LoadData(_year);
+        _data = _runningDataService.LoadDataOfYear(_year);
 
         skElement.InvalidateVisual();
         return _lastInsertedId; // 返回ID
