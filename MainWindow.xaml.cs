@@ -534,7 +534,7 @@ public partial class MainWindow : Window
 
         // 其他字段可以为空
         double.TryParse(TxtHeartRate.Text, out heartRate);
-        vo2max = TxtVO2Max.Text;
+        vo2max = TxtVo2Max.Text;
         var r = int.TryParse(TxtCadence.Text,out cadence);
         if (!string.IsNullOrEmpty(TxtPace.Text))
         {
