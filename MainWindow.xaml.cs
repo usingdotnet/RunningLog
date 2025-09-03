@@ -741,8 +741,8 @@ public partial class MainWindow : Window
     private void DrawMonthlyDistancePlot(double[] monthlyDistances)
     {
         WpfPlot1.Plot.Clear();
-        var plt = WpfPlot1.Plot;
-        List<Bar> bars = new List<Bar>();
+        Plot plt = WpfPlot1.Plot;
+        List<Bar> bars = [];
         foreach (var v in monthlyDistances.Index())
         {
             var bar = new Bar() { Position = v.Index + 1, Value = v.Item, Error = 0, FillColor = Colors.Orange };
