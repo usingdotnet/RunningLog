@@ -119,8 +119,10 @@ public partial class MainWindow : Window
 
         // 绘制每月跑量图表
         double[] monthlyDistances = GetMonthlyDistances();
-        DrawMonthlyDistancePlot(monthlyDistances);
         SavePng(e.Surface);
+        DrawMonthlyDistancePlot(monthlyDistances);
+        DrawMonthly();
+        DrawYearly();
     }
 
     /// <summary>
@@ -439,7 +441,7 @@ public partial class MainWindow : Window
         _lastInsertedId = UpdateDataAndSave(selectedDate, distance, duration, heartRate, pace, vo2Max, notes,cadence);
         ShowMessage("添加完成。", MessageType.Success);
 
-        _fullLog = $"{_time}{_place}跑步 {duration}，{distance} 公里，步频 {cadence}，平均配速 {pace}，平均心率 {heartRate}，最大摄氧量 {vo2Max}。";
+        _fullLog = $"{_time}在{_place}跑步 {duration}，{distance} 公里，步频 {cadence}，平均配速 {pace}，平均心率 {heartRate}，最大心率 ，最大摄氧量 {vo2Max}。温度  ℃，湿度 %";
         _logger.Debug(_fullLog);
 
         // 添加成功后清空输入框
@@ -808,26 +810,64 @@ public partial class MainWindow : Window
 
         plt.Axes.Bottom.TickGenerator = new ScottPlot.TickGenerators.NumericManual(ticks);
         plt.Axes.Bottom.MajorTickStyle.Length = 0;
+        plt.Axes.Margins(bottom: 0, top: .2);
         WpfPlot1.Plot.Font.Automatic();
+        WpfPlot1.UserInputProcessor.IsEnabled = false;
         WpfPlot1.Refresh();
+    }
 
-        // 绘制每月累计跑量折线图
+    /// <summary>
+    /// 绘制每年累计跑量折线图
+    /// </summary>
+    private void DrawYearly()
+    {
+        var yearlyRecords = _runningDataService.GetYearlyRunningRecords();
+        Plot plot = new();
+        plot.Title("Cumulative Running Distance Trend By Year", 15);
+        plot.YLabel("Distance (km)", 13);
+        plot.XLabel("Year", 13);
+
+        // create sample data
+        int[] dataX = yearlyRecords.Select(x => x.Year).ToArray();
+        double[] dataY = yearlyRecords.Select(x => x.CumulativeDistance).ToArray();
+
+        ScottPlot.TickGenerators.NumericAutomatic tickGenX = new();
+        tickGenX.TargetTickCount = dataX.Length;
+        plot.Axes.Bottom.TickGenerator = tickGenX;
+
+        // use manually defined ticks
+        double[] tickPositions = { 0,250,500,750, 1000,1250, 1500,1750,2000,2250,2500,2750,3000 };
+        string[] tickLabels = tickPositions.Select(x => x.ToString()).ToArray();
+        plot.Axes.Left.SetTicks(tickPositions, tickLabels);
+
+        plot.Add.Scatter(dataX, dataY);
+
+        plot.Font.Automatic();
+        string png1 = Path.Combine(_dataDir, $"CumulativeTrendByYear.png");
+        plot.SavePng(png1, 790, 240);
+    }
+
+    /// <summary>
+    /// 绘制每月累计跑量折线图
+    /// </summary>
+    private void DrawMonthly()
+    {
         var monthlyRecords = _runningDataService.GetMonthlyRunningRecords();
-        Plot plt1 = new();
+        Plot plot = new();
 
         DateTime[] dates = monthlyRecords
             .Select(r => DateTime.ParseExact(r.Month, "yyyy-MM", null))
             .ToArray(); 
         double[] ys = monthlyRecords.Select(r => r.CumulativeDistance).ToArray();
-        plt1.Add.Scatter(dates, ys);
-        plt1.Axes.DateTimeTicksBottom();
-        plt1.Title("Cumulative Running Distance Trend By Month", 15);
-        plt1.YLabel("Distance (km)", 13);
-        plt1.XLabel("Time", 13);
+        plot.Add.Scatter(dates, ys);
+        plot.Axes.DateTimeTicksBottom();
+        plot.Title("Cumulative Running Distance Trend By Month", 15);
+        plot.YLabel("Distance (km)", 13);
+        plot.XLabel("Month", 13);
 
-        plt1.RenderManager.RenderStarting += (s, e) =>
+        plot.RenderManager.RenderStarting += (s, e) =>
         {
-            Tick[] ticks1 = plt1.Axes.Bottom.TickGenerator.Ticks;
+            Tick[] ticks1 = plot.Axes.Bottom.TickGenerator.Ticks;
             for (int i = 0; i < ticks1.Length; i++)
             {
                 DateTime dt = DateTime.FromOADate(ticks1[i].Position);
@@ -836,35 +876,9 @@ public partial class MainWindow : Window
             }
         };
 
-        plt1.Font.Automatic();
+        plot.Font.Automatic();
         string png = Path.Combine(_dataDir, $"CumulativeTrendByMonth.png");
-        plt1.SavePng(png, 790, 240);
-
-        // 绘制每年累计跑量折线图
-        var yearlyRecords = _runningDataService.GetYearlyRunningRecords();
-        Plot plt2 = new();
-        plt2.Title("Cumulative Running Distance Trend By Year", 15);
-        plt2.YLabel("Distance (km)", 13);
-        plt2.XLabel("Year", 13);
-
-        // create sample data
-        int[] dataX = yearlyRecords.Select(x => x.Year).ToArray();
-        double[] dataY = yearlyRecords.Select(x => x.CumulativeDistance).ToArray();
-
-        ScottPlot.TickGenerators.NumericAutomatic tickGenX = new();
-        tickGenX.TargetTickCount = dataX.Length;
-        plt2.Axes.Bottom.TickGenerator = tickGenX;
-
-        // use manually defined ticks
-        double[] tickPositions = { 0,250,500,750, 1000,1250, 1500,1750,2000,2250,2500,2750,3000 };
-        string[] tickLabels = tickPositions.Select(x => x.ToString()).ToArray();
-        plt2.Axes.Left.SetTicks(tickPositions, tickLabels);
-
-        plt2.Add.Scatter(dataX, dataY);
-
-        plt2.Font.Automatic();
-        string png1 = Path.Combine(_dataDir, $"CumulativeTrendByYear.png");
-        plt2.SavePng(png1, 790, 240);
+        plot.SavePng(png, 790, 240);
     }
 }
 
