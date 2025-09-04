@@ -132,7 +132,7 @@ public partial class MainWindow : Window
     {
         List<string> urls = [];
         var di = new DirectoryInfo(_dataDir);
-        var fis = di.GetFiles( "*.png");
+        var fis = di.GetFiles("*.png");
         fis = fis.Where(x => x.Name.StartsWith("20")).OrderByDescending(x => x.Name).ToArray();
         foreach (var fi in fis)
         {
@@ -243,9 +243,9 @@ public partial class MainWindow : Window
         float textOffsetX = 5;
 
         // 绘制图例文字
-        canvas.DrawText("0 km", legendX + CellSize / 2 - font.MeasureText("0km") / 2 - 2 * CellSize, legendY + CellSize / 2 + textOffsetY,font, textPaint);
-        canvas.DrawText("5 km", legendX + 6 * CellSize - font.MeasureText("5km") / 2 + 4, legendY + CellPadding + CellSize + textOffsetY + textOffsetX,font, textPaint);
-        canvas.DrawText("10 km", legendX + 11 * CellSize + textOffsetX, legendY + CellSize / 2 + textOffsetY,font, textPaint);
+        canvas.DrawText("0 km", legendX + CellSize / 2 - font.MeasureText("0km") / 2 - 2 * CellSize, legendY + CellSize / 2 + textOffsetY, font, textPaint);
+        canvas.DrawText("5 km", legendX + 6 * CellSize - font.MeasureText("5km") / 2 + 4, legendY + CellPadding + CellSize + textOffsetY + textOffsetX, font, textPaint);
+        canvas.DrawText("10 km", legendX + 11 * CellSize + textOffsetX, legendY + CellSize / 2 + textOffsetY, font, textPaint);
     }
 
     private void DrawHeatmap(SKCanvas canvas)
@@ -432,13 +432,13 @@ public partial class MainWindow : Window
 
     private void BtnOk_OnClick(object sender, RoutedEventArgs e)
     {
-        if (!ValidateInput(out DateTime selectedDate, out double distance, out string duration, out string pace, out double heartRate, out string vo2Max, out string notes,out int cadence))
+        if (!ValidateInput(out DateTime selectedDate, out double distance, out string duration, out string pace, out double heartRate, out string vo2Max, out string notes, out int cadence))
         {
             ShowMessage("请输入有效的距离、时长、心率、配速和备注。", MessageType.Error);
             return;
         }
 
-        _lastInsertedId = UpdateDataAndSave(selectedDate, distance, duration, heartRate, pace, vo2Max, notes,cadence);
+        _lastInsertedId = UpdateDataAndSave(selectedDate, distance, duration, heartRate, pace, vo2Max, notes, cadence);
         ShowMessage("添加完成。", MessageType.Success);
 
         _fullLog = $"{_time}在{_place}跑步 {duration}，{distance} 公里，步频 {cadence}，平均配速 {pace}，平均心率 {heartRate}，最大心率 ，最大摄氧量 {vo2Max}。温度  ℃，湿度 %";
@@ -533,7 +533,7 @@ public partial class MainWindow : Window
         Clipboard.SetText(_fullLog);
     }
 
-    private bool ValidateInput(out DateTime selectedDate, out double distance, out string duration, out string pace, out double heartRate, out string vo2max, out string notes,out int cadence)
+    private bool ValidateInput(out DateTime selectedDate, out double distance, out string duration, out string pace, out double heartRate, out string vo2max, out string notes, out int cadence)
     {
         selectedDate = default;
         distance = 0;
@@ -558,7 +558,7 @@ public partial class MainWindow : Window
         // 其他字段可以为空
         double.TryParse(TxtHeartRate.Text, out heartRate);
         vo2max = TxtVo2Max.Text;
-        var r = int.TryParse(TxtCadence.Text,out cadence);
+        var r = int.TryParse(TxtCadence.Text, out cadence);
         if (!string.IsNullOrEmpty(TxtPace.Text))
         {
             var pt = TxtPace.Text.Split(".");// 允许输入6.23，解析为 6′23″
@@ -668,7 +668,7 @@ public partial class MainWindow : Window
         return result;
     }
 
-    private int UpdateDataAndSave(DateTime selectedDate, double distance, string duration, double heartRate, string pace, string vo2max, string notes,int cadence)
+    private int UpdateDataAndSave(DateTime selectedDate, double distance, string duration, double heartRate, string pace, string vo2max, string notes, int cadence)
     {
         LogDistanceChange(selectedDate, distance);
         if (!_data.ContainsKey(selectedDate))
@@ -817,37 +817,6 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// 绘制每年累计跑量折线图
-    /// </summary>
-    private void DrawYearly()
-    {
-        var yearlyRecords = _runningDataService.GetYearlyRunningRecords();
-        Plot plot = new();
-        plot.Title("Cumulative Running Distance Trend By Year", 15);
-        plot.YLabel("Distance (km)", 13);
-        plot.XLabel("Year", 13);
-
-        // create sample data
-        int[] dataX = yearlyRecords.Select(x => x.Year).ToArray();
-        double[] dataY = yearlyRecords.Select(x => x.CumulativeDistance).ToArray();
-
-        ScottPlot.TickGenerators.NumericAutomatic tickGenX = new();
-        tickGenX.TargetTickCount = dataX.Length;
-        plot.Axes.Bottom.TickGenerator = tickGenX;
-
-        // use manually defined ticks
-        double[] tickPositions = { 0,250,500,750, 1000,1250, 1500,1750,2000,2250,2500,2750,3000 };
-        string[] tickLabels = tickPositions.Select(x => x.ToString()).ToArray();
-        plot.Axes.Left.SetTicks(tickPositions, tickLabels);
-
-        plot.Add.Scatter(dataX, dataY);
-
-        plot.Font.Automatic();
-        string png1 = Path.Combine(_dataDir, $"CumulativeTrendByYear.png");
-        plot.SavePng(png1, 790, 240);
-    }
-
-    /// <summary>
     /// 绘制每月累计跑量折线图
     /// </summary>
     private void DrawMonthly()
@@ -857,14 +826,14 @@ public partial class MainWindow : Window
 
         DateTime[] dates = monthlyRecords
             .Select(r => DateTime.ParseExact(r.Month, "yyyy-MM", null))
-            .ToArray(); 
+            .ToArray();
         double[] ys = monthlyRecords.Select(r => r.CumulativeDistance).ToArray();
         plot.Add.Scatter(dates, ys);
         plot.Axes.DateTimeTicksBottom();
         plot.Title("Cumulative Running Distance Trend By Month", 15);
         plot.YLabel("Distance (km)", 13);
         plot.XLabel("Month", 13);
-
+        //plot.Axes.SetLimitsY(0,ys.Max() * 1.5);
         plot.RenderManager.RenderStarting += (s, e) =>
         {
             Tick[] ticks1 = plot.Axes.Bottom.TickGenerator.Ticks;
@@ -876,9 +845,74 @@ public partial class MainWindow : Window
             }
         };
 
+        if (_isDarkMode)
+        {
+            plot.Add.Palette = new ScottPlot.Palettes.Penumbra();
+            // change figure colors
+            plot.FigureBackground.Color = Color.FromHex("#181818");
+            plot.DataBackground.Color = Color.FromHex("#1f1f1f");
+
+            // change axis and grid colors
+            plot.Axes.Color(Color.FromHex("#d7d7d7"));
+            plot.Grid.MajorLineColor = Color.FromHex("#404040");
+
+            // change legend colors
+            plot.Legend.BackgroundColor = Color.FromHex("#404040");
+            plot.Legend.FontColor = Color.FromHex("#d7d7d7");
+            plot.Legend.OutlineColor = Color.FromHex("#d7d7d7");
+        }
+
         plot.Font.Automatic();
         string png = Path.Combine(_dataDir, $"CumulativeTrendByMonth.png");
         plot.SavePng(png, 790, 240);
+    }
+
+    /// <summary>
+    /// 绘制每年累计跑量折线图
+    /// </summary>
+    private void DrawYearly()
+    {
+        var yearlyRecords = _runningDataService.GetYearlyRunningRecords();
+        Plot plot = new();
+
+        plot.Title("Cumulative Running Distance Trend By Year", 15);
+        plot.YLabel("Distance (km)", 13);
+        plot.XLabel("Year", 13);
+
+        // create sample data
+        int[] dataX = yearlyRecords.Select(x => x.Year).ToArray();
+        double[] dataY = yearlyRecords.Select(x => x.CumulativeDistance).ToArray();
+        //plot.Axes.SetLimitsY(0, dataY.Max() * 1.5);
+
+        ScottPlot.TickGenerators.NumericAutomatic tickGenY = new();
+        tickGenY.TargetTickCount = dataY.Length;
+        plot.Axes.Bottom.TickGenerator = tickGenY;
+        double[] tickPositions = { 0, 250, 500, 750, 1000, 1250, 1500, 1750, 2000, 2250, 2500, 2750, 3000 };
+        string[] tickLabels = tickPositions.Select(x => x.ToString()).ToArray();
+        plot.Axes.Left.SetTicks(tickPositions, tickLabels);
+
+        if (_isDarkMode)
+        {
+            plot.Add.Palette = new ScottPlot.Palettes.Penumbra();
+            // change figure colors
+            plot.FigureBackground.Color = Color.FromHex("#181818");
+            plot.DataBackground.Color = Color.FromHex("#1f1f1f");
+
+            // change axis and grid colors
+            plot.Axes.Color(Color.FromHex("#d7d7d7"));
+            plot.Grid.MajorLineColor = Color.FromHex("#404040");
+
+            // change legend colors
+            plot.Legend.BackgroundColor = Color.FromHex("#404040");
+            plot.Legend.FontColor = Color.FromHex("#d7d7d7");
+            plot.Legend.OutlineColor = Color.FromHex("#d7d7d7");
+        }
+
+        plot.Add.Scatter(dataX, dataY);
+
+        plot.Font.Automatic();
+        string png1 = Path.Combine(_dataDir, $"CumulativeTrendByYear.png");
+        plot.SavePng(png1, 790, 240);
     }
 }
 
