@@ -115,10 +115,32 @@ public partial class MainWindow : Window
         DrawHeatmap(canvas);
         DrawLegend(canvas);
 
+        UpdateReadme();
+
         // 绘制每月跑量图表
         double[] monthlyDistances = GetMonthlyDistances();
         DrawMonthlyDistancePlot(monthlyDistances);
         SavePng(e.Surface);
+    }
+
+    /// <summary>
+    /// 更新 github readme 中的年份链接
+    /// </summary>
+    private void UpdateReadme()
+    {
+        List<string> urls = [];
+        var di = new DirectoryInfo(_dataDir);
+        var fis = di.GetFiles( "*.png");
+        fis = fis.Where(x => x.Name.StartsWith("20")).OrderByDescending(x => x.Name).ToArray();
+        foreach (var fi in fis)
+        {
+            string year = Path.GetFileNameWithoutExtension(fi.Name);
+            var url = $"![{year}]({_config.Repo}/blob/main/data/{year}.png)";
+            urls.Add(url);
+        }
+
+        var readmePath = Path.Combine(_repoDir, "README.md");
+        File.WriteAllLines(readmePath, urls);
     }
 
     private void DrawYear(SKCanvas canvas)

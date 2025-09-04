@@ -4,6 +4,8 @@ public class AppConfig
 {
     public bool IsDarkMode { get; set; } = true;
 
+    public string Repo { get; set; }
+
     public string RepoDir { get; set; } = @"E:\Data\MyRunningLog";
 
     public string Place1 { get; set; } = "地点1";
