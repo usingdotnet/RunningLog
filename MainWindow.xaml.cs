@@ -156,7 +156,7 @@ public partial class MainWindow : Window
         var urlYearly = $"![Monthly]({_config.Repo}/blob/main/data/CumulativeTrendByYear.png)";
 
         var readmePath = Path.Combine(_repoDir, "trend.md");
-        rows.Add($"### Total: {summary.RunDays} days, {summary.TotalDistance} km.");
+        rows.Add($"### Total: {summary.DaysRun} days, {summary.TotalDistance} km.");
         rows.Add(Environment.NewLine);
         rows.Add(urlMonthly);
         rows.Add(Environment.NewLine);

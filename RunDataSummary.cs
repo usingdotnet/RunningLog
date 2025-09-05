@@ -2,7 +2,7 @@
 
 public class RunDataSummary
 {
-    public int RunDays { get; set; }
+    public int DaysRun { get; set; }
 
     public decimal TotalDistance { get; set; }
 
