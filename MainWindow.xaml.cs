@@ -5,6 +5,7 @@ using SkiaSharp.Views.Desktop;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Security.Policy;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -116,6 +117,7 @@ public partial class MainWindow : Window
         DrawLegend(canvas);
 
         UpdateReadme();
+        UpdateTrendInfo();
 
         // 绘制每月跑量图表
         double[] monthlyDistances = GetMonthlyDistances();
@@ -143,6 +145,23 @@ public partial class MainWindow : Window
 
         var readmePath = Path.Combine(_repoDir, "README.md");
         File.WriteAllLines(readmePath, urls);
+    }
+
+    private void UpdateTrendInfo()
+    {
+        var summary = _runningDataService.GetRunDataSummary();
+
+        List<string> rows = [];
+        var urlMonthly = $"![Monthly]({_config.Repo}/blob/main/data/CumulativeTrendByMonth.png)";
+        var urlYearly = $"![Monthly]({_config.Repo}/blob/main/data/CumulativeTrendByYear.png)";
+
+        var readmePath = Path.Combine(_repoDir, "trend.md");
+        rows.Add($"### Total: {summary.RunDays} days, {summary.TotalDistance} km.");
+        rows.Add(Environment.NewLine);
+        rows.Add(urlMonthly);
+        rows.Add(Environment.NewLine);
+        rows.Add(urlYearly);
+        File.WriteAllLines(readmePath, rows);
     }
 
     private void DrawYear(SKCanvas canvas)

@@ -46,6 +46,14 @@ internal class RunningDataService
         return records;
     }
 
+    public RunDataSummary GetRunDataSummary()
+    {
+        using var connection = new SQLiteConnection(_conStr);
+        connection.Open();
+        var summary = connection.QuerySingle<RunDataSummary>("SELECT * FROM '总里程'");
+        return summary;
+    }
+
     public int Save(RunData runData)
     {
         using var connection = new SQLiteConnection(_conStr);
