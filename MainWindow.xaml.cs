@@ -460,7 +460,7 @@ public partial class MainWindow : Window
         _lastInsertedId = UpdateDataAndSave(selectedDate, distance, duration, heartRate, pace, vo2Max, notes, cadence);
         ShowMessage("添加完成。", MessageType.Success);
 
-        _fullLog = $"{_time}在{_place}跑步 {duration}，{distance} 公里，步频 {cadence}，平均配速 {pace}，平均心率 {heartRate}，最大心率 ，最大摄氧量 {vo2Max}。温度  ℃，湿度 %";
+        _fullLog = $"{_time}在{_place}跑步 {duration}，{distance} 公里，步频 {cadence}，平均配速 {pace}，平均心率 {heartRate}，最大心率 ，最大摄氧量 {vo2Max}。温度 ℃，湿度 %";
         _logger.Debug(_fullLog);
 
         // 添加成功后清空输入框
