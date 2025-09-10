@@ -1,37 +1,36 @@
 ﻿using System;
 using System.Windows;
 
-namespace RunningLog
+namespace RunningLog;
+
+public partial class EditCountDialog : Window
 {
-    public partial class EditCountDialog : Window
+    public int NewCount { get; private set; }
+
+    public EditCountDialog(DateTime date, int count)
     {
-        public int NewCount { get; private set; }
+        InitializeComponent();
+        DateTextBox.Text = date.ToShortDateString();
+        CountTextBox.Text = count.ToString();
+    }
 
-        public EditCountDialog(DateTime date, int count)
+    private void OnOkClick(object sender, RoutedEventArgs e)
+    {
+        if (int.TryParse(CountTextBox.Text, out int count))
         {
-            InitializeComponent();
-            DateTextBox.Text = date.ToShortDateString();
-            CountTextBox.Text = count.ToString();
-        }
-
-        private void OnOkClick(object sender, RoutedEventArgs e)
-        {
-            if (int.TryParse(CountTextBox.Text, out int count))
-            {
-                NewCount = count;
-                DialogResult = true;
-                Close();
-            }
-            else
-            {
-                MessageBox.Show("Invalid count value.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private void OnCancelClick(object sender, RoutedEventArgs e)
-        {
-            DialogResult = false;
+            NewCount = count;
+            DialogResult = true;
             Close();
         }
+        else
+        {
+            MessageBox.Show("Invalid count value.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private void OnCancelClick(object sender, RoutedEventArgs e)
+    {
+        DialogResult = false;
+        Close();
     }
 }
