@@ -460,7 +460,7 @@ public partial class MainWindow : Window
         _lastInsertedId = UpdateDataAndSave(record);
         ShowMessage("添加完成。", MessageType.Success);
 
-        _fullLog = $"{_timeOfDay}在{_place}跑步 {record.Duration}，{record.Distance} 公里，步频 {record.Cadence}，平均配速 {record.Pace}，平均心率 {record.HeartRate}，最大心率 {record.HeartRateMax}，最大摄氧量 {record.Vo2max}。温度 {record.Temperature}℃，湿度 {record.Humidity}%";
+        _fullLog = $"{_timeOfDay}在{_place}跑步 {record.Distance} 公里，用时 {record.Duration}，平均配速 {record.Pace}，步频 {record.Cadence}，平均心率 {record.HeartRate}，最大心率 {record.HeartRateMax}，最大摄氧量 {record.Vo2max}，温度 {record.Temperature}℃，湿度 {record.Humidity}%";
         _logger.Debug(_fullLog);
 
         // 添加成功后清空输入框
@@ -689,15 +689,15 @@ public partial class MainWindow : Window
         var result = "";
         if (hours > 0)
         {
-            result += $"{hours}h";
+            result += $"{hours}小时";
         }
         if (minutes > 0 || hours > 0) // 如果有小时，分钟可以为0
         {
-            result += $"{minutes}min";
+            result += $"{minutes}分钟";
         }
         if (seconds > 0 || (hours == 0 && minutes == 0)) // 如果没有小时和分钟，秒可以为0
         {
-            result += $"{seconds}s";
+            result += $"{seconds}秒";
         }
 
         return (result, totalSeconds);
