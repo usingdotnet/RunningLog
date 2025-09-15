@@ -40,7 +40,7 @@ public partial class MainWindow : Window
     private int _lastInsertedId;
     private readonly RunningDataService _runningDataService;
     private readonly GitService _gitService;
-    private string _time = "";
+    private string _timeOfDay = "";
     private string _place = "";
     private string _fullLog = "";
 
@@ -451,16 +451,18 @@ public partial class MainWindow : Window
 
     private void BtnOk_OnClick(object sender, RoutedEventArgs e)
     {
-        if (!ValidateInput(out DateTime selectedDate, out double distance, out string duration, out string pace, out double heartRate, out string vo2Max, out string notes, out int cadence))
+        if (!ValidateInput(out DateTime selectedDate, out double distance, out string duration, out int durationSeconds,
+            out string pace, out int cadence, out double heartRate,out double hearReatMax, out string vo2Max,
+            out double temperature,out double humidity, out string notes))
         {
             ShowMessage("请输入有效的距离、时长、心率、配速和备注。", MessageType.Error);
             return;
         }
 
-        _lastInsertedId = UpdateDataAndSave(selectedDate, distance, duration, heartRate, pace, vo2Max, notes, cadence);
+        _lastInsertedId = UpdateDataAndSave(selectedDate, distance, duration,durationSeconds,pace, cadence, heartRate, hearReatMax, vo2Max, temperature,humidity, _timeOfDay,_place, notes);
         ShowMessage("添加完成。", MessageType.Success);
 
-        _fullLog = $"{_time}在{_place}跑步 {duration}，{distance} 公里，步频 {cadence}，平均配速 {pace}，平均心率 {heartRate}，最大心率 ，最大摄氧量 {vo2Max}。温度 ℃，湿度 %";
+        _fullLog = $"{_timeOfDay}在{_place}跑步 {duration}，{distance} 公里，步频 {cadence}，平均配速 {pace}，平均心率 {heartRate}，最大心率 {hearReatMax}，最大摄氧量 {vo2Max}。温度 {temperature}℃，湿度 {humidity}%";
         _logger.Debug(_fullLog);
 
         // 添加成功后清空输入框
@@ -552,14 +554,18 @@ public partial class MainWindow : Window
         Clipboard.SetText(_fullLog);
     }
 
-    private bool ValidateInput(out DateTime selectedDate, out double distance, out string duration, out string pace, out double heartRate, out string vo2max, out string notes, out int cadence)
+    private bool ValidateInput(out DateTime selectedDate, out double distance, out string duration, out int durationSeconds, out string pace, out int cadence, out double heartRate,out double heartRateMax, out string vo2max,out double temperature,out double humidity, out string notes)
     {
         selectedDate = default;
         distance = 0;
         duration = "";
+        durationSeconds = 0;
         pace = "";
         heartRate = 0;
+        heartRateMax = 0;
         vo2max = "";
+        temperature = 23;
+        humidity = 46;
         notes = string.Empty;
         cadence = 175;
 
@@ -572,10 +578,11 @@ public partial class MainWindow : Window
         }
 
         // 解析时长格式
-        duration = ParseDuration(TxtDuration.Text);
+        (duration, durationSeconds) = ParseDuration(TxtDuration.Text);
 
         // 其他字段可以为空
         double.TryParse(TxtHeartRate.Text, out heartRate);
+        double.TryParse(TxtHeartRateMax.Text, out heartRateMax);
         vo2max = TxtVo2Max.Text;
         var r = int.TryParse(TxtCadence.Text, out cadence);
         if (!string.IsNullOrEmpty(TxtPace.Text))
@@ -591,6 +598,11 @@ public partial class MainWindow : Window
             }
         }
 
+        double.TryParse(TxtTemperature.Text, out temperature);
+        double.TryParse(TxtHumidity.Text, out humidity);
+
+        GetRunTime();
+        GetRunPlace();
         notes = GetNote();
 
         return true;
@@ -599,25 +611,15 @@ public partial class MainWindow : Window
     private string GetNote()
     {
         string note = "";
+        note += _timeOfDay;
+        note += _place;
+        note += "跑步";
 
-        // 时间
-        if (rbMorning.IsChecked ?? false)
-        {
-            _time = rbMorning.Content?.ToString() ?? string.Empty;
-        }
+        return note;
+    }
 
-        if (rbAfternoon.IsChecked ?? false)
-        {
-            _time = rbAfternoon.Content?.ToString() ?? string.Empty;
-        }
-
-        if (rbEvening.IsChecked ?? false)
-        {
-            _time = rbEvening.Content?.ToString() ?? string.Empty;
-        }
-
-        note += _time;
-
+    private void GetRunPlace()
+    {
         // 地点
         if (rbPlace1.IsChecked ?? false)
         {
@@ -631,21 +633,36 @@ public partial class MainWindow : Window
         {
             _place = txtOtherPlace.Text ?? string.Empty;
         }
-
-        note += _place;
-        note += "跑步";
-
-        return note;
     }
 
-    private string ParseDuration(string durationString)
+    private void GetRunTime()
+    {
+        // 时间
+        if (rbMorning.IsChecked ?? false)
+        {
+            _timeOfDay = rbMorning.Content?.ToString() ?? string.Empty;
+        }
+
+        if (rbAfternoon.IsChecked ?? false)
+        {
+            _timeOfDay = rbAfternoon.Content?.ToString() ?? string.Empty;
+        }
+
+        if (rbEvening.IsChecked ?? false)
+        {
+            _timeOfDay = rbEvening.Content?.ToString() ?? string.Empty;
+        }
+    }
+
+    private (string str,int total) ParseDuration(string durationString)
     {
         if (string.IsNullOrEmpty(durationString))
         {
-            return ""; // 如果输入为空，返回零时长
+            return ("",0); // 如果输入为空，返回零时长
         }
 
         int hours = 0, minutes = 0, seconds = 0;
+        int totalSeconds = 0;
 
         // 使用 . 分隔输入
         var parts = durationString.Split('.');
@@ -667,6 +684,8 @@ public partial class MainWindow : Window
             {
                 minutes = int.Parse(parts[0]);
             }
+
+            totalSeconds = hours * 3600 + minutes * 60 + seconds;
         }
 
         // 构建返回字符串
@@ -684,10 +703,14 @@ public partial class MainWindow : Window
             result += $"{seconds}s";
         }
 
-        return result;
+        return (result,totalSeconds);
     }
 
-    private int UpdateDataAndSave(DateTime selectedDate, double distance, string duration, double heartRate, string pace, string vo2max, string notes, int cadence)
+    private int UpdateDataAndSave(DateTime selectedDate, double distance, string duration,int durationSeconds,string pace, int cadence,
+        double heartRate, double heartRateMax,
+        string vo2max, double temperature, double humidity,
+        string timeOfDay, string place,
+        string notes)
     {
         LogDistanceChange(selectedDate, distance);
         if (!_data.ContainsKey(selectedDate))
@@ -700,11 +723,17 @@ public partial class MainWindow : Window
             Date = selectedDate,
             Distance = distance,
             Duration = duration,
-            HeartRate = heartRate,
+            DurationSeconds = durationSeconds,
             Pace = pace,
-            VO2Max = vo2max,
-            Notes = notes,
             Cadence = cadence,
+            HeartRate = heartRate,
+            HeartRateMax = heartRateMax,
+            VO2Max = vo2max,
+            Temperature = temperature,
+            Humidity = humidity,
+            TimeOfDay = timeOfDay,
+            Place = place,
+            Notes = notes,
         };
 
         _lastInsertedId = _runningDataService.Save(runData);

@@ -8,7 +8,7 @@
         xmlns:skia="clr-namespace:SkiaSharp.Views.WPF;assembly=SkiaSharp.Views.WPF"
         xmlns:sys="clr-namespace:System;assembly=System.Runtime" Loaded="MainWindow_OnLoaded"
         xmlns:ScottPlot="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF"
-        Title="跑步日志" Height="810" Width="940" FontSize="13">
+        Title="跑步日志" Height="880" Width="980" FontSize="13">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -104,27 +104,55 @@
                     </StackPanel>
                     <TextBox Name="txtOtherPlace" Width="100" Text="" Margin="5" VerticalAlignment="Center"/>
                 </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="5">
-                    <Label Content="距离：" VerticalAlignment="Center" Margin="5"/>
-                    <TextBox Name="TxtDistance" Width="50" Text="" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
-                    <Label Content="公里" VerticalAlignment="Center" Margin="5"/>
+                <UniformGrid Columns="4" Margin="5">
+                    <UniformGrid.Resources>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Width" Value="200" />
+                        </Style>
+                        <Style TargetType="Label">
+                            <Setter Property="MinWidth" Value="90" />
+                        </Style>
+                    </UniformGrid.Resources>
+                    <StackPanel Orientation="Horizontal" Margin="5">
+                        <Label Content="距离 (km)：" VerticalAlignment="Center" Margin="5"/>
+                        <TextBox Name="TxtDistance" Width="50" Text="" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
+                    </StackPanel>
 
-                    <Label Content="时长：" VerticalAlignment="Center" Margin="5"/>
-                    <TextBox Name="TxtDuration" Width="50" Text="" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
-
-                    <Label Content="配速：" VerticalAlignment="Center" Margin="5"/>
-                    <TextBox Name="TxtPace" Width="50" Text="" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
-
-                    <Label Content="心率：" VerticalAlignment="Center" Margin="5"/>
-                    <TextBox Name="TxtHeartRate" Width="50" Text="" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
-
-                    <Label Content="最大摄氧量：" VerticalAlignment="Center" Margin="5"/>
-                    <TextBox Name="TxtVo2Max" Width="50" Text="61" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
-
-                    <Label Content="步频：" VerticalAlignment="Center" Margin="5"/>
-                    <TextBox Name="TxtCadence" Width="50" Text="177" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
-
-                </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="5">
+                        <Label Content="时长：" VerticalAlignment="Center" Margin="5"/>
+                        <TextBox Name="TxtDuration" Width="50" Text="" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="5">
+                        <Label Content="配速：" VerticalAlignment="Center" Margin="5"/>
+                        <TextBox Name="TxtPace" Width="50" Text="" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="5">
+                        <Label Content="步频：" VerticalAlignment="Center" Margin="5"/>
+                        <TextBox Name="TxtCadence" Width="50" Text="177" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="5">
+                        <Label Content="心率：" VerticalAlignment="Center" Margin="5"/>
+                        <TextBox Name="TxtHeartRate" Width="50" Text="" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="5">
+                        <Label Content="最大心率：" VerticalAlignment="Center" Margin="5"/>
+                        <TextBox Name="TxtHeartRateMax" Width="50" Text="" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="5">
+                        <Label Content="最大摄氧量：" VerticalAlignment="Center" Margin="5"/>
+                        <TextBox Name="TxtVo2Max" Width="50" Text="61" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
+                    </StackPanel>
+                    <StackPanel>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="5">
+                        <Label Content="温度 (℃)：" VerticalAlignment="Center" Margin="5"/>
+                        <TextBox Name="TxtTemperature" Width="50" Text="" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="5">
+                        <Label Content="湿度 (%)：" VerticalAlignment="Center" Margin="5"/>
+                        <TextBox Name="TxtHumidity" Width="50" Text="" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
+                    </StackPanel>
+                </UniformGrid>
             </StackPanel>
             <StackPanel Grid.Column="0" Grid.Row="4" Orientation="Horizontal" Margin="5" Grid.ColumnSpan="2">
                 <Button Name="BtnOk" Content="添加" Margin="30,5,5,5" Width="60" Click="BtnOk_OnClick"/>
