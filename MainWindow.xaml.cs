@@ -319,7 +319,7 @@ public partial class MainWindow : Window
                 if (index < 0 || index >= totalDays) continue;
 
                 var date = startDate.AddDays(index);
-                double totalDistance = _data.TryGetValue(date, out List<RunData>? runs) ? runs.Sum(r => r.Distance) : 0;
+                double totalDistance = _data.TryGetValue(date, out List<RunData> runs) ? runs.Sum(r => r.Distance) : 0;
 
                 SKColor color = GetDayColor(totalDistance);
                 labelPaint.Color = color;
@@ -741,7 +741,7 @@ public partial class MainWindow : Window
     private void LogDistanceChange(DateTime selectedDate, double distance)
     {
         var d = selectedDate.ToString("yyyy-MM-dd");
-        if (_data.TryGetValue(selectedDate, out List<RunData>? values))
+        if (_data.TryGetValue(selectedDate, out List<RunData> values))
         {
             _logger.Debug($"日期 {d} 的距离由 {string.Join(", ", values.Select(r => r.Distance))} 添加了 {distance}");
         }

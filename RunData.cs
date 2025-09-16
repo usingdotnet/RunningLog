@@ -11,14 +11,14 @@ public class RunData
 
     public double Distance { get; set; }
 
-    public string? Duration { get; set; }
+    public string Duration { get; set; }
 
     public int DurationSeconds { get; set; }
 
     /// <summary>
     /// 配速
     /// </summary>
-    public string? Pace { get; set; }
+    public string Pace { get; set; }
 
     /// <summary>
     /// 步频
@@ -39,9 +39,9 @@ public class RunData
     /// <summary>
     /// 时间段，如早晨、上午、下午、晚上
     /// </summary>
-    public string? TimeOfDay { get; set; }
+    public string TimeOfDay { get; set; }
 
-    public string? Place { get; set; }
+    public string Place { get; set; }
 
-    public string? Notes { get; set; }
+    public string Notes { get; set; }
 }
