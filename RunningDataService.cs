@@ -30,6 +30,14 @@ internal class RunningDataService
         return data;
     }
 
+    public List<RunData> GetAllRunningRecords()
+    {
+        using var connection = new SQLiteConnection(_conStr);
+        connection.Open();
+        var data = connection.Query<RunData>("SELECT * FROM RunData").ToList();
+        return data;
+    }
+
     public List<MonthlyRunningRecord> GetMonthlyRunningRecords()
     {
         using var connection = new SQLiteConnection(_conStr);

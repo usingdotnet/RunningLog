@@ -1,8 +1,10 @@
-﻿using NLog;
+﻿using CsvHelper;
+using NLog;
 using ScottPlot;
 using SkiaSharp;
 using SkiaSharp.Views.Desktop;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Security.Policy;
@@ -24,6 +26,7 @@ public partial class MainWindow : Window
     private Dictionary<DateTime, List<RunData>> _data;
     private string _dataDir = "";
     private string _repoDir = "";
+    private string _repoMilesDir = "";
     private readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private bool _isDarkMode = true;
 
@@ -40,6 +43,7 @@ public partial class MainWindow : Window
     private int _lastInsertedId;
     private readonly RunningDataService _runningDataService;
     private readonly GitService _gitService;
+    private readonly GitService _gitServiceMiles;
     private string _timeOfDay = "";
     private string _place = "";
     private string _fullLog = "";
@@ -50,6 +54,7 @@ public partial class MainWindow : Window
         LoadConfig();
         _runningDataService = new RunningDataService(_dataDir);
         _gitService = new GitService(_repoDir);
+        _gitServiceMiles = new GitService(_repoDir);
         InitializeWindowPosition();
         _data = _runningDataService.LoadDataOfYear(_year);
         UpdateYearButtonsVisibility();
@@ -78,6 +83,7 @@ public partial class MainWindow : Window
 
         _isDarkMode = _config.IsDarkMode;
         _repoDir = _config.RepoDir;
+        _repoMilesDir = _config.MilesRepoDir;
         _dataDir = Path.Combine(_repoDir, "data");
         rbPlace1.Content = _config.Place1;
         rbPlace2.Content = _config.Place2;
@@ -125,6 +131,7 @@ public partial class MainWindow : Window
         DrawMonthlyDistancePlot(monthlyDistances);
         DrawMonthly();
         DrawYearly();
+        ExportToCsv();
     }
 
     /// <summary>
@@ -528,6 +535,7 @@ public partial class MainWindow : Window
                 {
                     string date = lastRun.Key.ToShortDateString();
                     await _gitService.CommitChanges($"{date} 跑步 {lastRun.Value.Sum(r => r.Distance):F2} 公里");
+                    await _gitServiceMiles.CommitChanges("update");
                 }
                 else
                 {
@@ -538,6 +546,7 @@ public partial class MainWindow : Window
 
             // 推送所有提交
             await _gitService.PushChanges();
+            await _gitServiceMiles.PushChanges();
             ShowMessage("成功发布更改。", MessageType.Success);
         }
         catch (Exception ex)
@@ -954,6 +963,25 @@ public partial class MainWindow : Window
         plot.Font.Automatic();
         string png1 = Path.Combine(_dataDir, $"CumulativeTrendByYear.png");
         plot.SavePng(png1, 790, 240);
+    }
+
+    private void ExportToCsv()
+    {
+        var records = _runningDataService.GetAllRunningRecords();
+        var exportRecords = records.Select(r => new
+        {
+            DT = r.Date.ToString("yyyy-MM-dd"),
+            Distance = r.Distance,
+            HeartRate = r.HeartRate == 0 ? "" : r.HeartRate.ToString(),
+            Pace = r.Pace
+        }).ToList();
+        string csvPath = Path.Combine(_dataDir, "running.csv");
+        using var writer = new StreamWriter(csvPath);
+        using var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
+        csv.WriteRecords(exportRecords);
+        string destCsv = Path.Combine(_config.MilesRepoDir, "running.csv");
+        File.Copy(csvPath, destCsv, true);
+        //File.Delete(csvPath);
     }
 }
 
