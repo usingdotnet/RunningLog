@@ -32,16 +32,32 @@ public class GitService(string repoDir)
 
     public async Task Pull()
     {
+        if (!Directory.Exists(RepoDir))
+        {
+            _logger.Debug($"{RepoDir} 不存在");
+            return;
+        }
         await ExecuteGitCommand($"pull");
     }
 
     public async Task CommitChanges(string message)
     {
+        if (!Directory.Exists(RepoDir))
+        {
+            _logger.Debug($"{RepoDir} 不存在");
+            return;
+        }
         await ExecuteGitCommand($"commit -a -m \"{message}\"");
     }
 
     public async Task PushChanges()
     {
+        if (!Directory.Exists(RepoDir))
+        {
+            _logger.Debug($"{RepoDir} 不存在");
+            return;
+        }
+
         await ExecuteGitCommand("push");
     }
 
