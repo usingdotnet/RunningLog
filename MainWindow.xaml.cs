@@ -982,7 +982,7 @@ public partial class MainWindow : Window
             string csvPath = Path.Combine(_config.MilesRepoDir, "running.csv");
             using var writer = new StreamWriter(csvPath);
             using var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
-            csv.WriteRecords(exportRecords);            
+            csv.WriteRecords(exportRecords);
             _logger.Debug($"导出 {exportRecords.Count} 条记录到 CSV 文件 {csvPath}");
         }
     }
