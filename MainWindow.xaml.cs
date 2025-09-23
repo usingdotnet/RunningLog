@@ -47,7 +47,7 @@ public partial class MainWindow : Window
     private string _timeOfDay = "";
     private string _place = "";
     private string _fullLog = "";
-    private Lock _lock = new Lock();
+    private readonly Lock _lock = new();
 
     public MainWindow()
     {

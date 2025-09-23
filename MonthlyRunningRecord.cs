@@ -5,7 +5,6 @@
 /// </summary>
 public class MonthlyRunningRecord
 {
-
     /// <summary>
     /// 月份（格式：yyyy-MM）
     /// </summary>
