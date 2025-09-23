@@ -47,6 +47,7 @@ public partial class MainWindow : Window
     private string _timeOfDay = "";
     private string _place = "";
     private string _fullLog = "";
+    private Lock _lock = new Lock();
 
     public MainWindow()
     {
@@ -535,6 +536,7 @@ public partial class MainWindow : Window
                 {
                     string date = lastRun.Key.ToShortDateString();
                     await _gitService.CommitChanges($"{date} 跑步 {lastRun.Value.Sum(r => r.Distance):F2} 公里");
+                    await _gitServiceMiles.Pull();
                     await _gitServiceMiles.CommitChanges("update");
                 }
                 else
@@ -967,21 +969,22 @@ public partial class MainWindow : Window
 
     private void ExportToCsv()
     {
-        var records = _runningDataService.GetAllRunningRecords();
-        var exportRecords = records.Select(r => new
+        lock (_lock)
         {
-            DT = r.Date.ToString("yyyy-MM-dd"),
-            Distance = r.Distance,
-            HeartRate = r.HeartRate == 0 ? "" : r.HeartRate.ToString(),
-            Pace = r.Pace
-        }).ToList();
-        string csvPath = Path.Combine(_dataDir, "running.csv");
-        using var writer = new StreamWriter(csvPath);
-        using var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
-        csv.WriteRecords(exportRecords);
-        string destCsv = Path.Combine(_config.MilesRepoDir, "running.csv");
-        File.Copy(csvPath, destCsv, true);
-        //File.Delete(csvPath);
+            var records = _runningDataService.GetAllRunningRecords();
+            var exportRecords = records.Select(r => new
+            {
+                DT = r.Date.ToString("yyyy-MM-dd"),
+                Distance = r.Distance,
+                HeartRate = r.HeartRate == 0 ? "" : r.HeartRate.ToString(),
+                Pace = r.Pace
+            }).ToList();
+            string csvPath = Path.Combine(_config.MilesRepoDir, "running.csv");
+            using var writer = new StreamWriter(csvPath);
+            using var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
+            csv.WriteRecords(exportRecords);            
+            _logger.Debug($"导出 {exportRecords.Count} 条记录到 CSV 文件 {csvPath}");
+        }
     }
 }
 

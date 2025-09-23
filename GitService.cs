@@ -30,6 +30,11 @@ public class GitService(string repoDir)
             .ExecuteAsync();
     }
 
+    public async Task Pull()
+    {
+        await ExecuteGitCommand($"pull");
+    }
+
     public async Task CommitChanges(string message)
     {
         await ExecuteGitCommand($"commit -a -m \"{message}\"");

@@ -34,7 +34,7 @@ internal class RunningDataService
     {
         using var connection = new SQLiteConnection(_conStr);
         connection.Open();
-        var data = connection.Query<RunData>("SELECT * FROM RunData").ToList();
+        var data = connection.Query<RunData>("SELECT * FROM RunData order by Date").ToList();
         return data;
     }
 
