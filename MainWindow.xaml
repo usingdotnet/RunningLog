@@ -152,6 +152,11 @@
                         <Label Content="湿度 (%)：" VerticalAlignment="Center" Margin="5"/>
                         <TextBox Name="TxtHumidity" Width="50" Text="" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
                     </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="5">
+                        <Label Content="备注：" VerticalAlignment="Center" Margin="5"/>
+                        <TextBox Name="TxtNotes" Width="50" Text="" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
+                    </StackPanel>
+
                 </UniformGrid>
             </StackPanel>
             <StackPanel Grid.Column="0" Grid.Row="4" Orientation="Horizontal" Margin="5" Grid.ColumnSpan="2">

@@ -6,9 +6,6 @@ using SkiaSharp.Views.Desktop;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.Reflection;
-using System.Security.Policy;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using Tomlet;
@@ -536,8 +533,8 @@ public partial class MainWindow : Window
                 {
                     string date = lastRun.Key.ToShortDateString();
                     await _gitService.CommitChanges($"{date} 跑步 {lastRun.Value.Sum(r => r.Distance):F2} 公里");
-                    await _gitServiceMiles.Pull();
-                    await _gitServiceMiles.CommitChanges("update");
+                    //await _gitServiceMiles.Pull();
+                    //await _gitServiceMiles.CommitChanges("update");
                 }
                 else
                 {
@@ -548,7 +545,7 @@ public partial class MainWindow : Window
 
             // 推送所有提交
             await _gitService.PushChanges();
-            await _gitServiceMiles.PushChanges();
+            //await _gitServiceMiles.PushChanges();
             ShowMessage("成功发布更改。", MessageType.Success);
         }
         catch (Exception ex)
@@ -586,11 +583,11 @@ public partial class MainWindow : Window
         record.HeartRate = heartRate;
         record.HeartRateMax = heartRateMax;
         record.Vo2max = TxtVo2Max.Text;
-        var r = int.TryParse(TxtCadence.Text, out int cadence);
+        bool r = int.TryParse(TxtCadence.Text, out int cadence);
         record.Cadence = r ? cadence : 0;
         if (!string.IsNullOrEmpty(TxtPace.Text))
         {
-            var pt = TxtPace.Text.Split(".");// 允许输入6.23，解析为 6′23″
+            string[] pt = TxtPace.Text.Split(".");// 允许输入6.23，解析为 6′23″
             if (pt.Length == 2)
             {
                 record.Pace = $"{pt[0]}′{pt[1]}″"; //6′46″
@@ -611,7 +608,7 @@ public partial class MainWindow : Window
         GetRunPlace();
         record.TimeOfDay = _timeOfDay;
         record.Place = _place;
-        record.Notes = GetNote();
+        record.Notes = string.IsNullOrEmpty(TxtNotes.Text) ? GetNote() : TxtNotes.Text;
 
         return true;
     }
