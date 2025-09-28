@@ -473,7 +473,7 @@ public partial class MainWindow : Window
         TxtDuration.Text = string.Empty;
         TxtHeartRate.Text = string.Empty;
         TxtPace.Text = string.Empty;
-        //TxtVO2Max.Text = string.Empty;
+        TxtVo2Max.Text = string.Empty;
     }
 
     private async void BtnRevert_OnClick(object sender, RoutedEventArgs e)
