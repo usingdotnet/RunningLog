@@ -659,7 +659,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private (string str, int total) ParseDuration(string durationString)
+    private static (string str, int total) ParseDuration(string durationString)
     {
         if (string.IsNullOrEmpty(durationString))
         {
@@ -936,7 +936,7 @@ public partial class MainWindow : Window
         ScottPlot.TickGenerators.NumericAutomatic tickGenY = new();
         tickGenY.TargetTickCount = dataY.Length;
         plot.Axes.Bottom.TickGenerator = tickGenY;
-        double[] tickPositions = { 0, 250, 500, 750, 1000, 1250, 1500, 1750, 2000, 2250, 2500, 2750, 3000 };
+        double[] tickPositions = [0, 250, 500, 750, 1000, 1250, 1500, 1750, 2000, 2250, 2500, 2750, 3000];
         string[] tickLabels = tickPositions.Select(x => x.ToString()).ToArray();
         plot.Axes.Left.SetTicks(tickPositions, tickLabels);
 
