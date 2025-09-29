@@ -656,52 +656,58 @@ public partial class MainWindow : Window
     {
         if (string.IsNullOrEmpty(durationString))
         {
-            return ("", 0); // 如果输入为空，返回零时长
+            return ("00:00:00", 0);
         }
 
-        int hours = 0, minutes = 0, seconds = 0;
-        int totalSeconds = 0;
+        int hours = 0, minutes, seconds = 0;
+        int totalSeconds;
 
         // 使用 . 分隔输入
         var parts = durationString.Split('.');
-        if (parts.Length > 0)
+        try
         {
-            // 解析小时
             if (parts.Length == 3)
             {
+                // HH:MM:SS
                 hours = int.Parse(parts[0]);
                 minutes = int.Parse(parts[1]);
                 seconds = int.Parse(parts[2]);
             }
             else if (parts.Length == 2)
             {
+                // MM:SS（不足一小时）
                 minutes = int.Parse(parts[0]);
                 seconds = int.Parse(parts[1]);
             }
             else if (parts.Length == 1)
             {
+                // 只有一部分，按分钟（如 "45"）
                 minutes = int.Parse(parts[0]);
+            }
+            else
+            {
+                throw new FormatException("Invalid duration format");
+            }
+
+            // 验证时间合法性
+            if (hours < 0 || minutes < 0 || seconds < 0 ||
+                minutes >= 60 || seconds >= 60)
+            {
+                throw new ArgumentOutOfRangeException("Invalid time components");
             }
 
             totalSeconds = hours * 3600 + minutes * 60 + seconds;
-        }
 
-        // 构建返回字符串
-        var result = "";
-        if (hours > 0)
-        {
-            result += $"{hours}小时";
-        }
-        if (minutes > 0 || hours > 0) // 如果有小时，分钟可以为0
-        {
-            result += $"{minutes}分钟";
-        }
-        if (seconds > 0 || (hours == 0 && minutes == 0)) // 如果没有小时和分钟，秒可以为0
-        {
-            result += $"{seconds}秒";
-        }
+            // 统一格式化为 HH:MM:SS
+            var formatted = $"{hours:D2}:{minutes:D2}:{seconds:D2}";
 
-        return (result, totalSeconds);
+            return (formatted, totalSeconds);
+        }
+        catch (Exception ex) when (ex is FormatException || ex is OverflowException || ex is ArgumentException)
+        {
+            // 解析失败，返回默认值或抛出异常，根据需要调整
+            return ("00:00:00", 0);
+        }
     }
 
     private int UpdateDataAndSave(RunRecordParams record)
