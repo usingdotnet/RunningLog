@@ -705,7 +705,7 @@ public partial class MainWindow : Window
         LogDistanceChange(record.Date, record.Distance);
         if (!_data.ContainsKey(record.Date))
         {
-            _data[record.Date] = new List<RunData>();
+            _data[record.Date] = [];
         }
 
         var runData = new RunData
