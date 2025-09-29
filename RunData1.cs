@@ -3,9 +3,10 @@
 namespace RunningLog;
 
 [Table("RunData")]
-public class RunData: RunDataBase
+public class RunData1:RunDataBase
 {
     public int Id { get; set; }
 
-    public DateTime Date { get; set; }
+
+    public string Date { get; set; }
 }

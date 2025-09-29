@@ -64,9 +64,25 @@ internal class RunningDataService
 
     public int Save(RunData runData)
     {
+        RunData1 data = new RunData1();
+        data.Date = runData.Date.ToString("yyyy-MM-dd");
+        data.Distance = runData.Distance;
+        data.Duration = runData.Duration;
+        data.DurationSeconds = runData.DurationSeconds;
+        data.Pace = runData.Pace;
+        data.Cadence = runData.Cadence;
+        data.HeartRate = runData.HeartRate;
+        data.HeartRateMax = runData.HeartRateMax;
+        data.VO2Max = runData.VO2Max;
+        data.Temperature = runData.Temperature;
+        data.Humidity = runData.Humidity;
+        data.TimeOfDay = runData.TimeOfDay;
+        data.Place = runData.Place;
+        data.Notes = runData.Notes;
+
         using var connection = new SQLiteConnection(_conStr);
         connection.Open();
-        var lastInsertedId = (int)connection.Insert(runData); // 返回新插入记录的ID
+        var lastInsertedId = (int)connection.Insert(data); // 返回新插入记录的ID
         return lastInsertedId;
     }
 

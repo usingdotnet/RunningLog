@@ -461,7 +461,7 @@ public partial class MainWindow : Window
         _lastInsertedId = UpdateDataAndSave(record);
         ShowMessage("添加完成。", MessageType.Success);
 
-        _fullLog = $"{_timeOfDay}在{_place}跑步 {record.Distance} 公里，用时 {record.Duration}，平均配速 {record.Pace}，步频 {record.Cadence}，平均心率 {record.HeartRate}，最大心率 {record.HeartRateMax}，最大摄氧量 {record.Vo2max}，温度 {record.Temperature}℃，湿度 {record.Humidity}%";
+        _fullLog = $"{_timeOfDay}在{_place}跑步 {record.Distance} 公里，用时 {record.Duration}，平均配速 {record.Pace}，步频 {record.Cadence}，平均心率 {record.HeartRate}，最大心率 {record.HeartRateMax}，最大摄氧量 {record.VO2Max}，温度 {record.Temperature}℃，湿度 {record.Humidity}%";
         _logger.Debug(_fullLog);
 
         // 添加成功后清空输入框
@@ -575,7 +575,7 @@ public partial class MainWindow : Window
         double.TryParse(TxtHeartRateMax.Text, out double heartRateMax);
         record.HeartRate = heartRate;
         record.HeartRateMax = heartRateMax;
-        record.Vo2max = TxtVo2Max.Text;
+        record.VO2Max = TxtVo2Max.Text;
         bool r = int.TryParse(TxtCadence.Text, out int cadence);
         record.Cadence = r ? cadence : 0;
         if (!string.IsNullOrEmpty(TxtPace.Text))
@@ -601,19 +601,9 @@ public partial class MainWindow : Window
         GetRunPlace();
         record.TimeOfDay = _timeOfDay;
         record.Place = _place;
-        record.Notes = string.IsNullOrEmpty(TxtNotes.Text) ? GetNote() : TxtNotes.Text;
+        record.Notes = string.IsNullOrEmpty(TxtNotes.Text) ? null : TxtNotes.Text;
 
         return true;
-    }
-
-    private string GetNote()
-    {
-        string note = "";
-        note += _timeOfDay;
-        note += _place;
-        note += "跑步";
-
-        return note;
     }
 
     private void GetRunPlace()
@@ -728,7 +718,7 @@ public partial class MainWindow : Window
             Cadence = record.Cadence,
             HeartRate = record.HeartRate,
             HeartRateMax = record.HeartRateMax,
-            VO2Max = record.Vo2max,
+            VO2Max = record.VO2Max,
             Temperature = record.Temperature,
             Humidity = record.Humidity,
             TimeOfDay = record.TimeOfDay,
