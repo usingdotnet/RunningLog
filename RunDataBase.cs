@@ -24,9 +24,9 @@ public class RunDataBase
 
     public string VO2Max { get; set; }
 
-    public double Temperature { get; set; }
+    public double? Temperature { get; set; }
 
-    public double Humidity { get; set; }
+    public double? Humidity { get; set; }
 
     /// <summary>
     /// 时间段，如早晨、上午、下午、晚上

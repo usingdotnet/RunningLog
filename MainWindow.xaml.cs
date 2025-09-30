@@ -594,8 +594,8 @@ public partial class MainWindow : Window
         double.TryParse(TxtTemperature.Text, out double temperature);
         double.TryParse(TxtHumidity.Text, out double humidity);
 
-        record.Temperature = temperature;
-        record.Humidity = humidity;
+        record.Temperature = temperature == 0 ? null : temperature;
+        record.Humidity = humidity == 0 ? null : humidity;
 
         GetRunTimeOfDay();
         GetRunPlace();
