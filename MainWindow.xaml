@@ -104,7 +104,7 @@
                     </StackPanel>
                     <TextBox Name="txtOtherPlace" Width="100" Text="" Margin="5" VerticalAlignment="Center"/>
                 </StackPanel>
-                <UniformGrid Columns="4" Margin="5">
+                <UniformGrid Columns="3" Margin="5">
                     <UniformGrid.Resources>
                         <Style TargetType="StackPanel">
                             <Setter Property="Width" Value="200" />
@@ -126,10 +126,7 @@
                         <Label Content="配速：" VerticalAlignment="Center" Margin="5"/>
                         <TextBox Name="TxtPace" Width="50" Text="" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="5">
-                        <Label Content="步频：" VerticalAlignment="Center" Margin="5"/>
-                        <TextBox Name="TxtCadence" Width="50" Text="177" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
-                    </StackPanel>
+                    
                     <StackPanel Orientation="Horizontal" Margin="5">
                         <Label Content="心率：" VerticalAlignment="Center" Margin="5"/>
                         <TextBox Name="TxtHeartRate" Width="50" Text="" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
@@ -139,10 +136,12 @@
                         <TextBox Name="TxtHeartRateMax" Width="50" Text="" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="5">
-                        <Label Content="最大摄氧量：" VerticalAlignment="Center" Margin="5"/>
-                        <TextBox Name="TxtVo2Max" Width="50" Text="61" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
+                        <Label Content="步频：" VerticalAlignment="Center" Margin="5"/>
+                        <TextBox Name="TxtCadence" Width="50" Text="" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
                     </StackPanel>
-                    <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="5">
+                        <Label Content="最大摄氧量：" VerticalAlignment="Center" Margin="5"/>
+                        <TextBox Name="TxtVo2Max" Width="50" Text="" VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Margin="5"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="5">
                         <Label Content="温度 (℃)：" VerticalAlignment="Center" Margin="5"/>
